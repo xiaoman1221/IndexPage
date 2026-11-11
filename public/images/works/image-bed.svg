@@ -1,0 +1,50 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 1000" width="800" height="1000">
+  <defs>
+    <radialGradient id="bedGlow" cx="66%" cy="32%" r="58%">
+      <stop offset="0" stop-color="#49ffb8" stop-opacity=".3"/>
+      <stop offset=".55" stop-color="#49ffb8" stop-opacity=".04"/>
+      <stop offset="1" stop-color="#080906" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="bedBg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#0d1a13"/>
+      <stop offset=".6" stop-color="#080d0a"/>
+      <stop offset="1" stop-color="#070806"/>
+    </linearGradient>
+    <linearGradient id="land" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#49ffb8" stop-opacity=".35"/>
+      <stop offset="1" stop-color="#49ffb8" stop-opacity="0"/>
+    </linearGradient>
+    <pattern id="bedGrid" width="48" height="48" patternUnits="userSpaceOnUse">
+      <path d="M48 0H0v48" fill="none" stroke="#49ffb8" stroke-opacity=".075"/>
+    </pattern>
+    <filter id="bedNoise">
+      <feTurbulence type="fractalNoise" baseFrequency=".82" numOctaves="3" stitchTiles="stitch"/>
+      <feColorMatrix type="saturate" values="0"/>
+    </filter>
+  </defs>
+
+  <rect width="800" height="1000" fill="url(#bedBg)"/>
+  <rect width="800" height="1000" fill="url(#bedGlow)"/>
+  <rect width="800" height="1000" fill="url(#bedGrid)"/>
+
+  <g fill="none" stroke="#49ffb8">
+    <rect x="120" y="206" width="440" height="286" stroke-opacity=".2"/>
+    <rect x="160" y="252" width="440" height="286" stroke-opacity=".4"/>
+    <rect x="200" y="298" width="440" height="286" stroke-opacity=".85"/>
+    <path d="M200 476 322 354l86 86 54-54 178 174" stroke-opacity=".75"/>
+    <circle cx="528" cy="372" r="30" stroke-opacity=".65"/>
+    <path d="M200 298v-44h440v44M640 298v286" stroke-opacity=".2"/>
+    <path d="M80 640h640M80 676h480" stroke-opacity=".12"/>
+    <circle cx="420" cy="440" r="330" stroke-opacity=".07" stroke-dasharray="1 14"/>
+    <path d="M420 60v880M60 500h680" stroke-opacity=".05"/>
+  </g>
+
+  <g font-family="monospace" fill="#49ffb8" letter-spacing="5">
+    <text x="52" y="76" font-size="14" fill-opacity=".62">03 / IMAGE</text>
+    <text x="748" y="76" font-size="13" text-anchor="end" fill-opacity=".38">STORAGE</text>
+    <text x="52" y="916" font-size="13" fill-opacity=".4">FRAME / LIGHT / MEMORY</text>
+    <text x="748" y="916" font-size="13" text-anchor="end" fill-opacity=".34">CACHE 76</text>
+  </g>
+
+  <rect width="800" height="1000" filter="url(#bedNoise)" opacity=".055"/>
+</svg>

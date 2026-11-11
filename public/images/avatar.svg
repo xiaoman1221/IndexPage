@@ -1,0 +1,61 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 800" width="800" height="800">
+  <defs>
+    <radialGradient id="glow" cx="62%" cy="30%" r="62%">
+      <stop offset="0" stop-color="#e6ff2e" stop-opacity=".3"/>
+      <stop offset=".55" stop-color="#e6ff2e" stop-opacity=".05"/>
+      <stop offset="1" stop-color="#080906" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#171a10"/>
+      <stop offset=".6" stop-color="#0a0b08"/>
+      <stop offset="1" stop-color="#070806"/>
+    </linearGradient>
+    <linearGradient id="scan" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#e6ff2e" stop-opacity="0"/>
+      <stop offset=".5" stop-color="#e6ff2e" stop-opacity=".22"/>
+      <stop offset="1" stop-color="#e6ff2e" stop-opacity="0"/>
+    </linearGradient>
+    <filter id="noise">
+      <feTurbulence type="fractalNoise" baseFrequency=".9" numOctaves="3" stitchTiles="stitch"/>
+      <feColorMatrix type="saturate" values="0"/>
+    </filter>
+    <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
+      <path d="M40 0H0v40" fill="none" stroke="#e6ff2e" stroke-opacity=".08"/>
+    </pattern>
+  </defs>
+
+  <rect width="800" height="800" fill="url(#bg)"/>
+  <rect width="800" height="800" fill="url(#glow)"/>
+  <rect width="800" height="800" fill="url(#grid)"/>
+
+  <g fill="none" stroke="#e6ff2e">
+    <circle cx="400" cy="390" r="324" stroke-opacity=".13" stroke-dasharray="1 12"/>
+    <circle cx="400" cy="390" r="262" stroke-opacity=".26" stroke-dasharray="74 22 2 22"/>
+    <circle cx="400" cy="390" r="204" stroke-opacity=".12"/>
+    <path d="M400 50v680M60 390h680" stroke-opacity=".09"/>
+    <path d="M400 80v32M400 668v32M86 390h32M682 390h32" stroke-opacity=".6"/>
+  </g>
+
+  <g stroke="#e6ff2e" fill="none">
+    <path d="M400 178 552 302 528 534 400 656 272 534 248 302Z" stroke-opacity=".65" stroke-width="1.4"/>
+    <path d="M400 224 512 318 494 504 400 596 306 504 288 318Z" stroke-opacity=".24"/>
+    <path d="M248 302h304M272 534h256M306 504 494 504M288 318 494 504M512 318 306 504" stroke-opacity=".16"/>
+    <path d="M318 366h164M300 414h200M318 462h164" stroke-opacity=".4"/>
+    <path d="M400 300v180" stroke-opacity=".2"/>
+  </g>
+
+  <path d="M400 236 486 390 400 544 314 390Z" fill="#e6ff2e" fill-opacity=".05"/>
+  <circle cx="400" cy="390" r="6" fill="#e6ff2e"/>
+
+  <rect x="0" y="454" width="800" height="58" fill="url(#scan)" opacity=".8"/>
+
+  <g font-family="monospace" fill="#e6ff2e">
+    <text x="48" y="70" font-size="14" letter-spacing="5" fill-opacity=".55">AN ZHI YU / ARCHIVE 2026</text>
+    <text x="752" y="70" font-size="14" letter-spacing="3" text-anchor="end" fill-opacity=".4">AZY-00</text>
+    <text x="400" y="698" font-size="92" letter-spacing="16" text-anchor="middle" fill="none" stroke="#e6ff2e" stroke-opacity=".85" stroke-width="1.5">AZY</text>
+    <text x="48" y="750" font-size="13" letter-spacing="4" fill-opacity=".45">PERSONAL ARCHIVE</text>
+    <text x="752" y="750" font-size="13" letter-spacing="4" text-anchor="end" fill-opacity=".45">37.87 N / 120.09 E</text>
+  </g>
+
+  <rect width="800" height="800" filter="url(#noise)" opacity=".05"/>
+</svg>

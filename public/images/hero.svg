@@ -1,0 +1,55 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 1000" width="1600" height="1000">
+  <defs>
+    <radialGradient id="heroGlow" cx="76%" cy="42%" r="48%">
+      <stop offset="0" stop-color="#e6ff2e" stop-opacity=".18"/>
+      <stop offset=".55" stop-color="#e6ff2e" stop-opacity=".035"/>
+      <stop offset="1" stop-color="#080906" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="beam" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#e6ff2e" stop-opacity="0"/>
+      <stop offset=".5" stop-color="#e6ff2e" stop-opacity=".4"/>
+      <stop offset="1" stop-color="#e6ff2e" stop-opacity="0"/>
+    </linearGradient>
+    <pattern id="heroGrid" width="80" height="80" patternUnits="userSpaceOnUse">
+      <path d="M80 0H0v80" fill="none" stroke="#e6ff2e" stroke-opacity=".045"/>
+    </pattern>
+  </defs>
+
+  <rect width="1600" height="1000" fill="url(#heroGlow)"/>
+  <rect width="1600" height="1000" fill="url(#heroGrid)"/>
+
+  <g fill="none" stroke="#e6ff2e">
+    <circle cx="1200" cy="420" r="390" stroke-opacity=".08" stroke-dasharray="1 14"/>
+    <circle cx="1200" cy="420" r="300" stroke-opacity=".14" stroke-dasharray="90 26 3 26"/>
+    <circle cx="1200" cy="420" r="214" stroke-opacity=".1"/>
+    <path d="M1200 20v960" stroke-opacity=".07"/>
+    <path d="M760 420h880" stroke-opacity=".07"/>
+    <path d="M1200 78v44M1200 718v44M838 420h44M1518 420h44" stroke-opacity=".45"/>
+    <path d="M1094 314 1306 526M1306 314 1094 526" stroke-opacity=".08"/>
+  </g>
+
+  <g fill="none" stroke="#e6ff2e" stroke-opacity=".12">
+    <ellipse cx="1200" cy="420" rx="520" ry="180" transform="rotate(-18 1200 420)"/>
+    <ellipse cx="1200" cy="420" rx="470" ry="150" transform="rotate(22 1200 420)" stroke-dasharray="4 14"/>
+    <ellipse cx="1200" cy="420" rx="650" ry="240" transform="rotate(-8 1200 420)" stroke-dasharray="120 40"/>
+  </g>
+
+  <g fill="none" stroke="#e6ff2e" stroke-opacity=".16">
+    <path d="M0 790c140-40 240-10 360 16s240 34 380-18 280-52 420-10 300 42 440 4"/>
+    <path d="M0 840c150-34 260-2 380 20s260 22 400-30 270-44 400 0 300 36 420 6"/>
+    <path d="M0 900c160-26 280 8 420 24s260 4 380-38 250-32 380 10 260 28 420 2"/>
+    <path d="M0 960c170-18 300 12 450 22s280-4 390-44 220-20 350 18 250 20 410-4"/>
+  </g>
+
+  <rect x="1198" y="120" width="3" height="600" fill="url(#beam)" opacity=".55"/>
+  <circle cx="1200" cy="420" r="4" fill="#e6ff2e" opacity=".9"/>
+  <circle cx="1200" cy="420" r="14" fill="none" stroke="#e6ff2e" stroke-opacity=".35"/>
+  <circle cx="1200" cy="420" r="28" fill="none" stroke="#e6ff2e" stroke-opacity=".16"/>
+
+  <g font-family="monospace" fill="#e6ff2e" letter-spacing="4">
+    <text x="1246" y="96" font-size="13" fill-opacity=".35">SCAN / 07</text>
+    <text x="1246" y="744" font-size="13" fill-opacity=".28">ELEV. 0084 M</text>
+    <text x="830" y="450" font-size="12" fill-opacity=".22">ANOMALY / AZY-00</text>
+    <text x="92" y="930" font-size="12" fill-opacity=".2">TOPOLOGY / END FIELD</text>
+  </g>
+</svg>

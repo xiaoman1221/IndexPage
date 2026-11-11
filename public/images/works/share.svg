@@ -1,0 +1,53 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 1000" width="800" height="1000">
+  <defs>
+    <radialGradient id="shareGlow" cx="50%" cy="38%" r="58%">
+      <stop offset="0" stop-color="#f2f0e6" stop-opacity=".18"/>
+      <stop offset=".55" stop-color="#f2f0e6" stop-opacity=".03"/>
+      <stop offset="1" stop-color="#080906" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="shareBg" x1="0" y1="1" x2="1" y2="0">
+      <stop offset="0" stop-color="#14130f"/>
+      <stop offset=".65" stop-color="#0b0b08"/>
+      <stop offset="1" stop-color="#070806"/>
+    </linearGradient>
+    <pattern id="shareGrid" width="50" height="50" patternUnits="userSpaceOnUse">
+      <path d="M50 0H0v50" fill="none" stroke="#f2f0e6" stroke-opacity=".055"/>
+    </pattern>
+    <filter id="shareNoise">
+      <feTurbulence type="fractalNoise" baseFrequency=".84" numOctaves="3" stitchTiles="stitch"/>
+      <feColorMatrix type="saturate" values="0"/>
+    </filter>
+  </defs>
+
+  <rect width="800" height="1000" fill="url(#shareBg)"/>
+  <rect width="800" height="1000" fill="url(#shareGlow)"/>
+  <rect width="800" height="1000" fill="url(#shareGrid)"/>
+
+  <g fill="none" stroke="#f2f0e6">
+    <path d="M400 168 650 460 400 780 150 460Z" stroke-opacity=".65"/>
+    <path d="M400 236 574 460 400 688 226 460Z" stroke-opacity=".24"/>
+    <path d="M400 168v612M150 460h500" stroke-opacity=".16"/>
+    <circle cx="400" cy="460" r="330" stroke-opacity=".1" stroke-dasharray="1 11"/>
+    <circle cx="400" cy="460" r="250" stroke-opacity=".16" stroke-dasharray="60 24 2 24"/>
+    <circle cx="400" cy="460" r="170" stroke-opacity=".1"/>
+    <path d="M400 236 574 460 400 688 226 460Z" stroke-dasharray="4 12" stroke-opacity=".35"/>
+    <circle cx="400" cy="460" r="7" fill="#f2f0e6"/>
+    <circle cx="400" cy="168" r="4" fill="#f2f0e6"/>
+    <circle cx="650" cy="460" r="4" fill="#f2f0e6"/>
+    <circle cx="400" cy="780" r="4" fill="#f2f0e6"/>
+    <circle cx="150" cy="460" r="4" fill="#f2f0e6"/>
+    <circle cx="574" cy="340" r="2.5" fill="#f2f0e6"/>
+    <circle cx="226" cy="580" r="2.5" fill="#f2f0e6"/>
+  </g>
+
+  <path d="M400 290 520 460 400 630 280 460Z" fill="#f2f0e6" fill-opacity=".035"/>
+
+  <g font-family="monospace" fill="#f2f0e6" letter-spacing="5">
+    <text x="52" y="76" font-size="14" fill-opacity=".58">04 / SHARE</text>
+    <text x="748" y="76" font-size="13" text-anchor="end" fill-opacity=".35">LIFE</text>
+    <text x="52" y="916" font-size="13" fill-opacity=".38">BREATHE / REST / REPEAT</text>
+    <text x="748" y="916" font-size="13" text-anchor="end" fill-opacity=".32">EPISODE 04</text>
+  </g>
+
+  <rect width="800" height="1000" filter="url(#shareNoise)" opacity=".05"/>
+</svg>

@@ -1,0 +1,55 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 1000" width="800" height="1000">
+  <defs>
+    <radialGradient id="gitGlow" cx="38%" cy="34%" r="62%">
+      <stop offset="0" stop-color="#ff3ea5" stop-opacity=".34"/>
+      <stop offset=".55" stop-color="#ff3ea5" stop-opacity=".05"/>
+      <stop offset="1" stop-color="#080906" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="gitBg" x1="1" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#1a0d14"/>
+      <stop offset=".6" stop-color="#0c080a"/>
+      <stop offset="1" stop-color="#070806"/>
+    </linearGradient>
+    <pattern id="gitGrid" width="46" height="46" patternUnits="userSpaceOnUse">
+      <path d="M46 0H0v46" fill="none" stroke="#ff3ea5" stroke-opacity=".075"/>
+    </pattern>
+    <filter id="gitNoise">
+      <feTurbulence type="fractalNoise" baseFrequency=".85" numOctaves="3" stitchTiles="stitch"/>
+      <feColorMatrix type="saturate" values="0"/>
+    </filter>
+  </defs>
+
+  <rect width="800" height="1000" fill="url(#gitBg)"/>
+  <rect width="800" height="1000" fill="url(#gitGlow)"/>
+  <rect width="800" height="1000" fill="url(#gitGrid)"/>
+
+  <g fill="none" stroke="#ff3ea5">
+    <path d="M400 150 676 760H124Z" stroke-opacity=".55"/>
+    <path d="M400 236 590 660H210Z" stroke-opacity=".2"/>
+    <path d="M400 150v610M124 760l276-524 276 524" stroke-opacity=".22"/>
+    <path d="M210 660h380M258 560h284M306 460h188" stroke-opacity=".18"/>
+    <circle cx="400" cy="470" r="210" stroke-opacity=".12" stroke-dasharray="1 10"/>
+    <circle cx="400" cy="470" r="150" stroke-opacity=".22" stroke-dasharray="42 16"/>
+    <path d="M400 240v460M170 470h460" stroke-opacity=".16"/>
+    <circle cx="400" cy="470" r="8" fill="#ff3ea5"/>
+    <circle cx="400" cy="150" r="5" fill="#ff3ea5"/>
+    <circle cx="124" cy="760" r="5" fill="#ff3ea5"/>
+    <circle cx="676" cy="760" r="5" fill="#ff3ea5"/>
+    <circle cx="210" cy="660" r="3.5" fill="#ff3ea5"/>
+    <circle cx="590" cy="660" r="3.5" fill="#ff3ea5"/>
+  </g>
+
+  <g stroke="#ff3ea5" stroke-opacity=".3">
+    <path d="M52 132h150M52 150h92M748 132h-120M748 150h-64"/>
+    <path d="M52 866h96M100 884h48M748 866h-128"/>
+  </g>
+
+  <g font-family="monospace" fill="#ff3ea5" letter-spacing="5">
+    <text x="52" y="76" font-size="14" fill-opacity=".68">02 / CODE</text>
+    <text x="748" y="76" font-size="13" text-anchor="end" fill-opacity=".4">OPEN SOURCE</text>
+    <text x="52" y="916" font-size="13" fill-opacity=".42">GIT / BUILD / SHARE</text>
+    <text x="748" y="916" font-size="13" text-anchor="end" fill-opacity=".35">COMMIT 88</text>
+  </g>
+
+  <rect width="800" height="1000" filter="url(#gitNoise)" opacity=".055"/>
+</svg>

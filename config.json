@@ -1,0 +1,520 @@
+{
+  "meta": {
+    "lang": "zh-CN",
+    "title": "满久琦 · 小满1221 | Xiaoman's Ink",
+    "description": "满久琦（小满1221）· 运维、学生、开发、博主。天上如是，地下亦然。",
+    "favicon": "/favicon.svg",
+    "themeColor": "#0066FF"
+  },
+  "theme": {
+    "accent": "#0066FF",
+    "accentSoft": "#003300"
+  },
+  "brand": {
+    "name": "小满1221",
+    "nameEn": "MAN JIUQI",
+    "alias": "满久琦",
+    "logo": "https://static.yhdzz.cn/imgs/xiaoman1221/xiaoman1221-new.jpg",
+    "home": "#home"
+  },
+  "header": {
+    "cta": {
+      "label": "BLOG",
+      "href": "https://www.yhdzz.cn/",
+      "external": true
+    }
+  },
+  "clock": {
+    "timezone": "Asia/Shanghai",
+    "label": "XMC"
+  },
+  "nav": [
+    {
+      "id": "home",
+      "index": "00",
+      "label": "首页",
+      "labelEn": "INDEX",
+      "href": "#home"
+    },
+    {
+      "id": "profile",
+      "index": "01",
+      "label": "关于",
+      "labelEn": "ABOUT",
+      "href": "#profile"
+    },
+    {
+      "id": "field",
+      "index": "02",
+      "label": "技能",
+      "labelEn": "SKILLS",
+      "href": "#field"
+    },
+    {
+      "id": "works",
+      "index": "03",
+      "label": "项目",
+      "labelEn": "PROJECTS",
+      "href": "#works"
+    },
+    {
+      "id": "contact",
+      "index": "04",
+      "label": "联系",
+      "labelEn": "CONTACT",
+      "href": "#contact"
+    }
+  ],
+  "rail": {
+    "line1": "SYS.ONLINE",
+    "line2": "CN-HH / 40.84°N"
+  },
+  "boot": {
+    "kicker": "满久琦 // PERSONAL ARCHIVE",
+    "title": "天上如是，地下亦然",
+    "hint": "CLICK ANYWHERE TO SKIP / 点击跳过",
+    "messages": [
+      "LINK HANDSHAKE",
+      "IDENTITY VERIFY",
+      "ARCHIVE SYNC",
+      "SIGNAL ACQUIRED"
+    ]
+  },
+  "scene": {
+    "enabled": true,
+    "accent": "#e6ff2e",
+    "glow": "#ffff96"
+  },
+  "swarm": {
+    "enabled": true,
+    "density": 1,
+    "interactive": true
+  },
+  "particles": {
+    "enabled": true,
+    "density": 1,
+    "dotMatrix": true,
+    "dotSpacing": 6,
+    "dotColor": "source",
+    "morph": {
+      "enabled": true,
+      "interval": 5.5,
+      "scatter": 1.6,
+      "gather": 1.9,
+      "hold": 2
+    },
+    "quote": {
+      "enabled": true,
+      "max": 2600
+    },
+    "hero": {
+      "max": 12000,
+      "dotSpacing": 2,
+      "size": 1.2,
+      "interactive": true,
+      "scatter": 1,
+      "blend": "lighter"
+    },
+    "avatar": {
+      "max": 8000,
+      "size": 1.3,
+      "interactive": true,
+      "scatter": 1.2
+    },
+    "works": {
+      "max": 6000,
+      "size": 1.6,
+      "interactive": true,
+      "scatter": 1.5
+    }
+  },
+  "hero": {
+    "image": "/images/hero.svg",
+    "imageAlt": "工业风点阵地形",
+    "eyebrow": [
+      "XIAOMAN'S INK",
+      "EST. 2017",
+      "CN-HH"
+    ],
+    "title": [
+      {
+        "text": "天上如是"
+      },
+      {
+        "text": "地下亦然",
+        "accent": "."
+      }
+    ],
+    "subtitleEn": "WELCOME TO XIAOMAN'S INK",
+    "subtitle": "满久琦 / 运维、学生、开发、博主。因为生活而去感受，学习、生活、程序、爱、和平。",
+    "actions": [
+      {
+        "label": "关于我",
+        "labelEn": "ABOUT ME",
+        "href": "#profile",
+        "style": "primary",
+        "external": false
+      },
+      {
+        "label": "小满的墨水瓶",
+        "labelEn": "VISIT BLOG",
+        "href": "https://www.yhdzz.cn/",
+        "style": "ghost",
+        "external": true
+      }
+    ],
+    "meta": [
+      {
+        "label": "IDENTITY / 身份",
+        "value": "运维 · 学生 · 开发 · 博主"
+      },
+      {
+        "label": "LOCATION / 坐标",
+        "value": "CN-HH · 40.84°N"
+      },
+      {
+        "label": "STATUS / 状态",
+        "value": "ONLINE",
+        "tone": "online"
+      },
+      {
+        "label": "VERSION / 版本",
+        "value": "EST. 2017"
+      }
+    ],
+    "scrollCue": {
+      "text": "SCROLL TO EXPLORE",
+      "href": "#profile"
+    },
+    "sigil": {
+      "lat": "40.84° N",
+      "lng": "111.75° E",
+      "alt": "ALT. 1040 M",
+      "ref": "REF. XM-1221"
+    }
+  },
+  "profile": {
+    "index": "01",
+    "title": "关于我",
+    "titleEn": "ABOUT ME",
+    "note": "// HELLO",
+    "introHtml": "你好👋<br>我叫<em>满久琦</em>，<br>是运维，学生，开发，博主。",
+    "bio": "目前生活在 中国，呼和浩特市。生于 2004 年，就读于 内蒙古鸿德文理学院 计算机科学与技术，INFP-T 调停者。喜欢折腾 Linux 服务器、写代码、记录生活，也喜欢番剧、游戏和音乐。",
+    "quote": {
+      "mode": "hitokoto",
+      "endpoint": "https://v1.hitokoto.cn/?encode=json&charset=utf-8&c=d&c=i&c=k",
+      "html": "落霞与孤鹜齐飞，秋水共长天一色。",
+      "source": "一言 · 滕王阁序",
+      "author": "— 王勃"
+    },
+    "stats": [
+      {
+        "value": "92",
+        "suffix": "篇",
+        "label": "文章 / ARTICLES"
+      },
+      {
+        "value": "3247",
+        "suffix": "d",
+        "label": "天 / 建站",
+        "since": "2017-12-22"
+      },
+      {
+        "value": "81392",
+        "suffix": "字",
+        "label": "字 / 全站"
+      },
+      {
+        "value": "128",
+        "suffix": "条",
+        "label": "条 / 评论"
+      }
+    ],
+    "avatar": {
+      "image": "https://static.yhdzz.cn/imgs/xiaoman1221/xiaoman1221-new.jpg",
+      "alt": "满久琦的档案头像",
+      "fallback": "MJQ",
+      "caption": "MAN JIUQI"
+    },
+    "idCard": {
+      "headLeft": "OPERATOR / IDENTITY CARD",
+      "headRight": "XIAOMAN1221-2026",
+      "fields": [
+        {
+          "label": "NAME / 姓名",
+          "value": "满久琦"
+        },
+        {
+          "label": "ROLE / 职业",
+          "value": "运维 · 学生 · 开发 · 博主"
+        },
+        {
+          "label": "BASE / 据点",
+          "value": "中国 · 呼和浩特"
+        },
+        {
+          "label": "FOCUS / 专注",
+          "value": "Ops / Dev / Web / Writing"
+        },
+        {
+          "label": "MAIL / 邮箱",
+          "value": "im@manjiuqi.com"
+        },
+        {
+          "label": "STATUS / 状态",
+          "value": "AVAILABLE",
+          "tone": "online"
+        }
+      ],
+      "code": "2017 — 2026 / XIAOMAN 1221"
+    }
+  },
+  "capabilities": {
+    "index": "02",
+    "title": "技能与工具",
+    "titleEn": "SKILLS & TOOLS",
+    "note": "// 会用的工具",
+    "lead": "因为生活而去感受。",
+    "leadNote": "学习、生活、程序、爱、和平。",
+    "marquee": [
+      "技术宅拯救世界",
+      "爱与和平"
+    ],
+    "items": [
+      {
+        "no": "01",
+        "title": "运维",
+        "titleEn": "OPERATIONS",
+        "description": "Linux、Nginx、Docker、Kubernetes、服务器搭建与网络防护，保证站点稳定在线。",
+        "tags": [
+          "Linux",
+          "Nginx",
+          "Docker",
+          "Kubernetes"
+        ],
+        "level": 90
+      },
+      {
+        "no": "02",
+        "title": "开发",
+        "titleEn": "DEVELOPMENT",
+        "description": "Java、Python、Go 与 TypeScript / JavaScript；用 Next.js、React、Vue、Node.js 构建 Web 应用。",
+        "tags": [
+          "Java",
+          "Python",
+          "Go",
+          "TypeScript",
+          "Next.js"
+        ],
+        "level": 86
+      },
+      {
+        "no": "03",
+        "title": "创作",
+        "titleEn": "CREATOR",
+        "description": "写博客、做内容、处理图像与视频；92 篇文章，持续记录学习、运维与生活。",
+        "tags": [
+          "Writing",
+          "Photoshop",
+          "Blog",
+          "字幕组"
+        ],
+        "level": 82
+      },
+      {
+        "no": "04",
+        "title": "生活",
+        "titleEn": "LIFE",
+        "description": "番剧、游戏、音乐与摄影；技术宅拯救世界，爱与和平。",
+        "tags": [
+          "Anime",
+          "Games",
+          "Music",
+          "Photography"
+        ],
+        "level": 78
+      }
+    ]
+  },
+  "works": {
+    "index": "03",
+    "title": "项目",
+    "titleEn": "PROJECTS",
+    "note": "// SELECTED LINKS",
+    "quoteHtml": "技术宅拯救世界！<br>爱与和平！",
+    "hint": "DRAG / SCROLL HORIZONTALLY · 横向滑动查看更多",
+    "items": [
+      {
+        "no": "01",
+        "title": "小满的墨水瓶",
+        "description": "运行 3247 天的个人博客，92 篇文章，记录运维、开发与生活。",
+        "client": "你好，很高兴认识你 👋",
+        "href": "https://www.yhdzz.cn/",
+        "urlLabel": "www.yhdzz.cn",
+        "image": "/images/works/blog.svg",
+        "imageAlt": "小满的墨水瓶封面",
+        "tags": [
+          "BLOG",
+          "92 POSTS"
+        ],
+        "accent": "#0066FF"
+      },
+      {
+        "no": "02",
+        "title": "一言GO",
+        "description": "基于 Go 的一言 API 项目，随手记录灵感与句子。",
+        "client": "Open Source / HitokotoGo",
+        "href": "https://github.com/xiaoman1221/HitokotoGo",
+        "urlLabel": "github.com/xiaoman1221/HitokotoGo",
+        "image": "/images/works/github.svg",
+        "imageAlt": "一言GO 封面",
+        "tags": [
+          "GO",
+          "API"
+        ],
+        "accent": "#ff3ea5"
+      },
+      {
+        "no": "03",
+        "title": "小满网盘",
+        "description": "个人网盘与文件分享空间。",
+        "client": "FreeImage / 随时存取",
+        "href": "https://www.freeima.com/",
+        "urlLabel": "www.freeima.com",
+        "image": "/images/works/image-bed.svg",
+        "imageAlt": "小满网盘封面",
+        "tags": [
+          "CLOUD",
+          "STORAGE"
+        ],
+        "accent": "#49ffb8"
+      },
+      {
+        "no": "04",
+        "title": "云电工作室",
+        "description": "2019 年至今参与的科技工作室与社区。",
+        "client": "Cloud Studio / 2019 - NOW",
+        "href": "https://bbs.ce-studio.cn/",
+        "urlLabel": "bbs.ce-studio.cn",
+        "image": "/images/works/share.svg",
+        "imageAlt": "云电工作室封面",
+        "tags": [
+          "STUDIO",
+          "COMMUNITY"
+        ],
+        "accent": "#f2f0e6"
+      }
+    ]
+  },
+  "contact": {
+    "index": "04",
+    "title": "联系",
+    "titleEn": "CONTACT",
+    "note": "// SAY HELLO",
+    "kicker": "HELLO THERE",
+    "kickerEmoji": "👋",
+    "email": "im@manjiuqi.com",
+    "line": "你好，很高兴认识你。",
+    "lineEmoji": "👋",
+    "links": [
+      {
+        "no": "01",
+        "label": "BLOG / 博客",
+        "value": "www.yhdzz.cn",
+        "href": "https://www.yhdzz.cn/",
+        "external": true
+      },
+      {
+        "no": "02",
+        "label": "GITHUB / 代码",
+        "value": "github.com/xiaoman1221",
+        "href": "https://github.com/xiaoman1221",
+        "external": true
+      },
+      {
+        "no": "03",
+        "label": "CLOUD / 网盘",
+        "value": "www.freeima.com",
+        "href": "https://www.freeima.com/",
+        "external": true
+      },
+      {
+        "no": "04",
+        "label": "STUDIO / 工作室",
+        "value": "bbs.ce-studio.cn",
+        "href": "https://bbs.ce-studio.cn/",
+        "external": true
+      }
+    ]
+  },
+  "techStack": [
+    "小满1221",
+    "AI",
+    "LLM",
+    "Java",
+    "Python",
+    "Golang",
+    "TypeScript",
+    "JavaScript",
+    "React",
+    "Next.js",
+    "Vue",
+    "Node.js",
+    "Docker",
+    "Kubernetes",
+    "Linux",
+    "Nginx",
+    "Git",
+    "Vite",
+    "Photoshop",
+    "Apifox",
+    "OneDrive",
+    "GitHub",
+    "CSS",
+    "tencent",
+    "strinova"
+  ],
+  "ticker": [
+    "天上如是，地下亦然",
+    "技术宅拯救世界！爱与和平！",
+    "学习、生活、程序、爱、和平",
+    "满久琦 · 小满1221"
+  ],
+  "footer": {
+    "copyright": "© {year} 满久琦 / 小满1221",
+    "icp": {
+      "label": "ICP备案号",
+      "href": "https://beian.miit.gov.cn/",
+      "external": true
+    },
+    "police": {
+      "label": "公安备案号",
+      "href": "https://beian.mps.gov.cn/",
+      "external": true
+    },
+    "customLink": {
+      "label": "小满的墨水瓶",
+      "href": "https://www.yhdzz.cn/",
+      "external": true
+    },
+    "credits": [
+      {
+        "text": "VISUAL LANGUAGE AFTER "
+      },
+      {
+        "text": "ARKNIGHTS: ENDFIELD",
+        "href": "https://endfield.hypergryph.com/",
+        "external": true
+      },
+      {
+        "text": " · CONTENT FROM "
+      },
+      {
+        "text": "YHDZZ.CN/ABOUT",
+        "href": "https://www.yhdzz.cn/about",
+        "external": true
+      }
+    ],
+    "backToTop": "BACK TO TOP"
+  }
+}
