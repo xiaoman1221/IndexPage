@@ -1,6 +1,6 @@
-# Xiaoman's Ink · 满久琦
+# Xiaoman's Ink 
 
-一个以《明日方舟：终末地》官网为视觉语言、以 [满久琦的关于页](https://www.yhdzz.cn/about) 为内容来源的个人主页。
+一个以《明日方舟：终末地》官网为视觉语言、以 [小满1221的关于页](https://www.yhdzz.cn/about) 为内容来源的个人主页。
 
 纯 **Vite + TypeScript + 原生 CSS**，没有 UI 框架、没有动画库。背景地形、轨道核心、扫描线与 HUD 均为程序化生成；内容图片按 **1px 网格重绘为彩色点阵**（每像素最多一个点），背景、地形、卡片网格也统一为点阵；技术栈文字使用普通文字而不是点阵，穿插在背景与能力区；品牌 Logo 与 Hero HUD 图标保持清晰的普通图片/矢量显示。页面跟随系统浅色 / 深色主题；整页按模块分屏，一次滚动切换一整节，换节时文字溶解成粒子再重组；一言是一块会跟随主题的终端，逐字输出并在文字后叠加粒子光晕。链接、文案、图片与主题全部集中在根目录的 **`config.json`**。
 
@@ -539,7 +539,7 @@ UI 强调色为蓝色 `#0066FF`，`scene.accent` 仍保留荧光黄作为地形/
 
 ## 说明
 
-- 页面信息与文案参考 [yhdzz.cn/about](https://www.yhdzz.cn/about)（满久琦 / 小满1221）；设计语言参考 index.anheyu.com。
+- 页面信息与文案参考 [yhdzz.cn/about](https://www.yhdzz.cn/about)（小满1221）；设计语言参考 index.anheyu.com。
 - 视觉语言参考 [《明日方舟：终末地》官网](https://endfield.hypergryph.com/) 与 [《明日方舟》官网](https://ak.hypergryph.com/)，仅作学习与设计练习，未复制其图片、字体或视频资源。
 - 漂浮粒子层的游走 / 拖尾 / 鼠标排斥效果参考 [再花 · 个人终端](https://zaihuaovo.github.io/FlowerTerminal/)，为本项目独立实现。
 - 字体 JetBrains Sans / JetBrains Mono 遵循 SIL Open Font License。
