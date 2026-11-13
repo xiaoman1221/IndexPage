@@ -221,7 +221,7 @@ class ParticleSwarm {
       y: Math.random() * this.height,
       vx: Math.cos(angle) * speed,
       vy: Math.sin(angle) * speed,
-      size: (0.7 + Math.random() * 1.5) * (0.55 + depth * 0.75),
+      size: (0.5 + Math.random() * 1.05) * (0.55 + depth * 0.75),
       depth,
       alpha: (0.15 + Math.random() * 0.27) * (0.55 + depth * 0.65),
       phase: Math.random() * TAU,
@@ -329,7 +329,7 @@ class ParticleSwarm {
       ctx.globalAlpha = alpha * 0.2;
       ctx.fillStyle = fill;
       ctx.beginPath();
-      ctx.arc(mote.x, mote.y, mote.size * 3.4, 0, TAU);
+      ctx.arc(mote.x, mote.y, mote.size * 2.7, 0, TAU);
       ctx.fill();
 
       // A short tail along the velocity vector sells the "flying" motion.
@@ -338,7 +338,7 @@ class ParticleSwarm {
         const tail = mote.streak * (4 + speed * 0.32);
         ctx.globalAlpha = alpha * 0.38;
         ctx.strokeStyle = fill;
-        ctx.lineWidth = mote.size * 0.9;
+        ctx.lineWidth = mote.size * 0.7;
         ctx.beginPath();
         ctx.moveTo(
           mote.x - (mote.vx / speed) * tail,

@@ -251,7 +251,7 @@ export class QuoteParticleText {
         ty: point.y + randomBetween(-0.5, 0.5),
         vx: 0,
         vy: 0,
-        size: randomBetween(0.9, 1.5),
+        size: randomBetween(0.65, 1.1),
         alpha: 0,
         baseAlpha: randomBetween(0.6, 0.94),
         phase: Math.random() * TAU,

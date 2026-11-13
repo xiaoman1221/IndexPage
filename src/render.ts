@@ -697,15 +697,48 @@ const renderContact = (config: SiteConfig) => {
     );
   }
 
+  const address = contact.email.trim();
+  const mailHref = safeHref(
+    address.includes('@') ? `mailto:${address}` : address,
+    '#',
+  );
   const mail = $<HTMLAnchorElement>('#contact-email');
   if (mail) {
-    const address = contact.email.trim();
-    mail.href = safeHref(
-      address.includes('@') ? `mailto:${address}` : address,
-      '#',
-    );
+    mail.href = mailHref;
     setText('#contact-email-text', address);
     if (address) mail.setAttribute('aria-label', address);
+  }
+
+  const open = $<HTMLAnchorElement>('#contact-open');
+  if (open && address) open.href = mailHref;
+
+  setText('#contact-lead', contact.lead);
+  setText('#contact-availability', contact.availability);
+  setText('#contact-response', contact.response);
+  setText('#contact-base', contact.base);
+  setText('#contact-language', contact.language);
+  setText('#contact-panel-note', contact.panelNote);
+
+  const protocol = $('#contact-protocol-grid');
+  if (protocol) {
+    const fragment = document.createDocumentFragment();
+    contact.protocol.forEach((step, index) => {
+      const item = create('div', 'contact-protocol-step');
+      item.append(
+        create(
+          'span',
+          'contact-protocol-no',
+          String(index + 1).padStart(2, '0'),
+        ),
+        create('b', undefined, step.label),
+        create('p', undefined, step.text),
+      );
+      fragment.append(item);
+    });
+    protocol.replaceChildren(fragment);
+    if (contact.protocol.length === 0) {
+      protocol.closest('.contact-protocol')?.setAttribute('hidden', '');
+    }
   }
 
   const line = $('#contact-line');

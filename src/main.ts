@@ -179,6 +179,58 @@ function setupBoot() {
    Header clock
    -------------------------------------------------------------------------- */
 
+const copyText = async (value: string): Promise<boolean> => {
+  try {
+    await navigator.clipboard.writeText(value);
+    return true;
+  } catch {
+    try {
+      const area = document.createElement('textarea');
+      area.value = value;
+      area.setAttribute('readonly', '');
+      area.style.position = 'fixed';
+      area.style.opacity = '0';
+      document.body.append(area);
+      area.select();
+      const ok = document.execCommand('copy');
+      area.remove();
+      return ok;
+    } catch {
+      return false;
+    }
+  }
+};
+
+function setupContact() {
+  const button = $<HTMLButtonElement>('#contact-copy');
+  const label = $('#contact-copy-label');
+  const status = $('#contact-copy-status');
+  const email = config.contact.email.trim();
+  if (!button || !label || !email) return;
+
+  const defaultLabel = label.textContent ?? 'COPY EMAIL';
+  let resetTimer = 0;
+
+  button.addEventListener('click', () => {
+    void (async () => {
+      const ok = await copyText(email);
+      window.clearTimeout(resetTimer);
+      button.classList.toggle('is-copied', ok);
+      label.textContent = ok ? 'COPIED ✓' : 'COPY FAILED';
+      if (status) {
+        status.textContent = ok
+          ? '邮箱地址已复制'
+          : '复制失败，请手动选择邮箱地址';
+      }
+      resetTimer = window.setTimeout(() => {
+        button.classList.remove('is-copied');
+        label.textContent = defaultLabel;
+        if (status) status.textContent = '';
+      }, 1800);
+    })();
+  });
+}
+
 function setupClock() {
   const clock = $('#clock');
   if (!clock) return;
@@ -191,8 +243,12 @@ function setupClock() {
     hour12: false,
   });
 
+  const contactLocal = $('#contact-local');
+
   const tick = () => {
-    clock.textContent = `${formatter.format(new Date())} ${config.clock.label}`;
+    const time = formatter.format(new Date());
+    clock.textContent = `${time} ${config.clock.label}`;
+    if (contactLocal) contactLocal.textContent = time;
   };
 
   tick();
@@ -704,47 +760,48 @@ function setupCarousel() {
     true,
   );
 
-  // Vertical wheel becomes horizontal scrolling while the pointer is over the
-  // project list; at either end the page scrolls normally again.
+  // While the pointer is over the project list the wheel belongs to the
+  // carousel: one CSS-snapped card per notch. Moving the pointer away hands
+  // the wheel back to the full-page pager.
   let wheelTimer = 0;
+  let wheelLock = 0;
   track.addEventListener(
     'wheel',
     (event) => {
       if (event.ctrlKey) return;
-      // In pager mode the wheel changes modules; drag / buttons scroll the track.
-      if (document.documentElement.classList.contains('pager')) return;
 
-      const raw =
-        Math.abs(event.deltaX) > Math.abs(event.deltaY)
-          ? event.deltaX
-          : event.deltaY;
-      if (!raw) return;
+      // Native horizontal trackpad gestures keep their momentum.
+      if (Math.abs(event.deltaX) > Math.abs(event.deltaY)) return;
 
-      const unit =
-        event.deltaMode === 1
-          ? 16
-          : event.deltaMode === 2
-            ? track.clientWidth
-            : 1;
-      const delta = raw * unit;
+      const delta = event.deltaY;
+      if (!delta) return;
+
       const max = track.scrollWidth - track.clientWidth;
       if (max <= 0) return;
 
+      const direction = delta > 0 ? 1 : -1;
       if (
-        (delta < 0 && track.scrollLeft <= 0) ||
-        (delta > 0 && track.scrollLeft >= max - 1)
+        (direction < 0 && track.scrollLeft <= 1) ||
+        (direction > 0 && track.scrollLeft >= max - 1)
       ) {
+        // Keep the whole page still while the pointer is on the list; move
+        // the pointer away to continue paging.
+        event.preventDefault();
         return;
       }
 
       event.preventDefault();
+      const now = performance.now();
+      if (now - wheelLock < 320) return;
+      wheelLock = now;
+
       track.classList.add('is-wheeling');
       window.clearTimeout(wheelTimer);
       wheelTimer = window.setTimeout(
         () => track.classList.remove('is-wheeling'),
-        140,
+        320,
       );
-      track.scrollLeft += delta;
+      scrollToCard(direction);
     },
     { passive: false },
   );
@@ -1020,6 +1077,8 @@ function setupHitokoto(particles: QuoteParticleText | null) {
   const promptLine = document.querySelector<HTMLElement>('.qt-prompt-line');
   const input = $<HTMLInputElement>('#quote-input');
   const typed = $('#quote-typed');
+  const runButton = $<HTMLButtonElement>('#quote-run');
+  const terminalCard = document.querySelector<HTMLElement>('.quote-terminal');
   const commandEcho = document.querySelector<HTMLElement>('.qt-cmd');
 
   if (!text || !source || !author) return;
@@ -1263,6 +1322,20 @@ function setupHitokoto(particles: QuoteParticleText | null) {
     input?.focus();
   });
 
+  runButton?.addEventListener('click', () => {
+    submit();
+    input?.focus();
+  });
+
+  // A terminal is click-to-type everywhere, not only on the tiny prompt.
+  terminalCard?.addEventListener('click', (event) => {
+    const target = event.target as Element;
+    if (target.closest('button, a, input')) return;
+    const selection = window.getSelection();
+    if (selection && !selection.isCollapsed) return;
+    input?.focus();
+  });
+
   const write = (sentence: string, from: string, fromWho: string) => {
     typing?.cancel();
     closeOutput();
@@ -1408,6 +1481,7 @@ setupBoot();
 initPageIntro();
 if (!pager.active) initSectionAssembly(config.assembly);
 setupClock();
+setupContact();
 const quoteParticles = initQuoteParticles({
   enabled: config.particles.enabled && config.particles.quote.enabled,
   max: config.particles.quote.max,

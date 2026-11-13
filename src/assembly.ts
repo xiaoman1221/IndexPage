@@ -80,6 +80,9 @@ export const SECTION_TEXT_SELECTOR = [
   '.track-hint',
   '.carousel-count',
   '.contact-kicker',
+  '.contact-lead',
+  '.contact-panel',
+  '.contact-protocol',
   '.mail-link span',
   '.mail-link i',
   '.contact-line',
@@ -316,7 +319,7 @@ const startRun = (
       sy: randomBetween(0, viewportHeight) + scroll0,
       tx: point.x,
       ty: point.y + scroll0,
-      size: randomBetween(1, 2.1),
+      size: randomBetween(0.7, 1.5),
       color: `rgb(${color[0]}, ${color[1]}, ${color[2]})`,
       alpha: randomBetween(0.5, 1),
       delay: randomBetween(0, MAX_DELAY / 1000),
@@ -359,10 +362,10 @@ const startRun = (
         ctx.globalAlpha = alpha * 0.12;
         ctx.fillStyle = particle.color;
         ctx.fillRect(
-          x - particle.size * 2.4,
-          y - particle.size * 2.4,
-          particle.size * 5,
-          particle.size * 5,
+          x - particle.size * 2,
+          y - particle.size * 2,
+          particle.size * 4.2,
+          particle.size * 4.2,
         );
       }
 

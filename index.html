@@ -351,6 +351,14 @@
                     <span class="qt-typed" id="quote-typed" aria-hidden="true"></span>
                     <span class="qt-caret" aria-hidden="true"></span>
                   </span>
+                  <button
+                    class="qt-run"
+                    id="quote-run"
+                    type="button"
+                    aria-label="执行终端命令"
+                  >
+                    RUN <span aria-hidden="true">↵</span>
+                  </button>
                 </p>
               </div>
             </figure>
@@ -501,30 +509,101 @@
         <div class="contact-bg-type" aria-hidden="true">CONTACT</div>
 
         <div class="contact-inner">
-          <p class="contact-kicker" id="contact-kicker" data-reveal></p>
-          <a
-            class="mail-link"
-            id="contact-email"
-            href="mailto:im@manjiuqi.com"
-            data-reveal
-            style="--d: 0.06s"
-          >
-            <span id="contact-email-text"></span>
-            <i>↗</i>
-          </a>
-          <p
-            class="contact-line"
-            id="contact-line"
-            data-reveal
-            style="--d: 0.12s"
-          ></p>
+          <div class="contact-hero">
+            <div class="contact-intro">
+              <p class="contact-kicker" id="contact-kicker" data-reveal></p>
+              <a
+                class="mail-link"
+                id="contact-email"
+                href="mailto:im@manjiuqi.com"
+                data-reveal
+                style="--d: 0.06s"
+              >
+                <span id="contact-email-text"></span>
+                <i aria-hidden="true">↗</i>
+              </a>
+              <p
+                class="contact-line"
+                id="contact-line"
+                data-reveal
+                style="--d: 0.12s"
+              ></p>
+              <p
+                class="contact-lead"
+                id="contact-lead"
+                data-reveal
+                style="--d: 0.16s"
+              ></p>
+            </div>
+
+            <aside
+              class="contact-panel"
+              data-reveal
+              style="--d: 0.18s"
+              aria-label="联系状态与回复说明"
+            >
+              <div class="contact-panel-head">
+                <span class="contact-panel-title">COMMS / 通信面板</span>
+                <span class="contact-status"
+                  ><i aria-hidden="true"></i
+                  ><span id="contact-availability"></span
+                ></span>
+              </div>
+              <dl class="contact-specs">
+                <div>
+                  <dt>RESPONSE / 回复</dt>
+                  <dd id="contact-response"></dd>
+                </div>
+                <div>
+                  <dt>BASE / 据点</dt>
+                  <dd id="contact-base"></dd>
+                </div>
+                <div>
+                  <dt>LOCAL / 本地时间</dt>
+                  <dd id="contact-local" class="is-live">--:--:--</dd>
+                </div>
+                <div>
+                  <dt>LANG / 语言</dt>
+                  <dd id="contact-language"></dd>
+                </div>
+              </dl>
+              <p class="contact-panel-note" id="contact-panel-note"></p>
+              <div class="contact-actions">
+                <button class="contact-copy" id="contact-copy" type="button">
+                  <span id="contact-copy-label">COPY EMAIL</span>
+                </button>
+                <a
+                  class="contact-open"
+                  id="contact-open"
+                  href="mailto:im@manjiuqi.com"
+                  >OPEN MAIL <i aria-hidden="true">↗</i></a
+                >
+                <span
+                  class="visually-hidden"
+                  id="contact-copy-status"
+                  role="status"
+                  aria-live="polite"
+                ></span>
+              </div>
+            </aside>
+          </div>
 
           <div
             class="contact-grid"
             id="contact-grid"
             data-reveal
-            style="--d: 0.18s"
+            style="--d: 0.2s"
           ></div>
+
+          <div class="contact-protocol" data-reveal style="--d: 0.26s">
+            <span class="contact-protocol-label"
+              >// BEFORE YOU WRITE / 来信之前</span
+            >
+            <div
+              class="contact-protocol-grid"
+              id="contact-protocol-grid"
+            ></div>
+          </div>
         </div>
       </section>
       <!-- 05 页脚 -->

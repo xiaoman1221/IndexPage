@@ -76,7 +76,7 @@ const SLIDE_TEXT_SELECTOR = [
 ].join(',');
 
 const TRANSITION_MS = 1100;
-const REVEAL_AT = 0.86;
+const REVEAL_AT = 0.78;
 const POINT_BUDGET = 1800;
 
 const clamp = (value: number, min: number, max: number) =>
@@ -339,7 +339,7 @@ export function initPager(): PagerHandle {
         my: Math.random() * height,
         ex: into.x,
         ey: into.y - toScroll,
-        size: 1 + Math.random() * 1.1,
+        size: 0.7 + Math.random() * 0.8,
         color: `rgb(${color[0]}, ${color[1]}, ${color[2]})`,
         delay: Math.random() * 0.08,
       });
@@ -362,7 +362,7 @@ export function initPager(): PagerHandle {
       }
       document.body.classList.remove('is-paging');
       canvas.classList.add('is-fading');
-      window.setTimeout(() => canvas.remove(), 260);
+      window.setTimeout(() => canvas.remove(), 420);
       done();
     };
 

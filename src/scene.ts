@@ -180,7 +180,7 @@ export class BackgroundScene {
       x: Math.random() * this.width,
       y: Math.random() * this.height * 0.78,
       z: 0.25 + Math.random() * 0.75,
-      size: 0.5 + Math.random() * 1.3,
+      size: 0.35 + Math.random() * 0.9,
       phase: Math.random() * TAU,
     }));
   }

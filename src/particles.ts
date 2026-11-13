@@ -176,6 +176,7 @@ interface Candidate {
   a: number;
   luma: number;
   weight: number;
+  background: boolean;
 }
 
 export interface ParticleMorphOptions {
@@ -202,6 +203,7 @@ export interface ParticleImageOptions {
   dotMatrix?: boolean;
   dotSpacing?: number;
   dotColor?: string;
+  includeBackground?: boolean;
   morph?: ParticleMorphOptions;
 }
 
@@ -224,6 +226,7 @@ interface ResolvedOptions {
   dotMatrix: boolean;
   dotSpacing: number;
   dotColor: string;
+  includeBackground: boolean;
   morphWords: string[];
   morphInterval: number;
   morphScatter: number;
@@ -400,7 +403,7 @@ class ParticleImage {
 
     this.options = {
       max: Math.max(24, Math.round(options.max ?? 1000)),
-      size: options.size ?? 1.2,
+      size: options.size ?? 1,
       interactive: options.interactive ?? true,
       scatter: options.scatter ?? 1.2,
       blend: options.blend ?? 'source-over',
@@ -409,6 +412,7 @@ class ParticleImage {
       dotMatrix: options.dotMatrix ?? true,
       dotSpacing: clamp(options.dotSpacing ?? 10, 1, 24),
       dotColor: options.dotColor ?? '#ffffff',
+      includeBackground: options.includeBackground ?? false,
       morphWords,
       morphInterval,
       morphScatter,
@@ -748,6 +752,8 @@ class ParticleImage {
     }
 
     const cutoff = this.options.lumaCutoff;
+    const includeBackground = this.options.includeBackground;
+    const lightTheme = window.matchMedia('(prefers-color-scheme: light)').matches;
     const lumaMap = new Float32Array(sampleW * sampleH);
     let opaquePixels = 0;
     let whitePixels = 0;
@@ -804,12 +810,24 @@ class ParticleImage {
         }
 
         const weight = edge + chroma * 0.25 + luma * 0.05;
-        const candidate = { x, y, r, g, b, a: alpha, luma, weight };
+        const background =
+          flatWhiteBackground && luma >= 222 && chroma < 22 && edge < 12;
+        const candidate = {
+          x,
+          y,
+          r,
+          g,
+          b,
+          a: alpha,
+          luma,
+          weight,
+          background,
+        };
 
         if (edge >= edgeThreshold || (chroma >= 34 && luma >= 24)) {
           salient.push(candidate);
         }
-        if (luma >= cutoff) {
+        if (includeBackground || luma >= cutoff) {
           fallback.push(candidate);
         }
       }
@@ -819,13 +837,15 @@ class ParticleImage {
     // edge/color set so the backdrop does not become a bright particle block.
     // Line-art SVGs keep the full luminance set, preserving their dense glow.
     const useEdges = flatWhiteBackground;
-    const candidates = useEdges
-      ? salient.length >= 40
-        ? salient
-        : fallback
-      : fallback.length >= 40
-        ? fallback
-        : salient;
+    const candidates = includeBackground
+      ? fallback
+      : useEdges
+        ? salient.length >= 40
+          ? salient
+          : fallback
+        : fallback.length >= 40
+          ? fallback
+          : salient;
 
     if (candidates.length < 6) return 'fail';
 
@@ -859,7 +879,11 @@ class ParticleImage {
         (maximum, candidate) => Math.max(maximum, candidate.luma),
         0,
       );
-      const minLuma = flatWhiteBackground ? maxLuma * 0.12 : maxLuma * 0.14;
+      const minLuma = includeBackground
+        ? 0
+        : flatWhiteBackground
+          ? maxLuma * 0.12
+          : maxLuma * 0.14;
 
       for (const candidate of candidates) {
         if (candidate.luma < minLuma) continue;
@@ -878,13 +902,20 @@ class ParticleImage {
         const tx = (cellX + 0.5) * spacing;
         const ty = (cellY + 0.5) * spacing;
         const spacingFactor = clamp(this.options.dotSpacing / 10, 0.15, 1);
-        const size =
-          clamp(
-            (1.2 + (candidate.luma / 255) * 2) * spacingFactor,
-            1.05,
-            3.4,
-          ) * this.options.size;
-        const baseAlpha = 0.45 + (candidate.luma / 255) * 0.55;
+        const backdrop = includeBackground && candidate.background;
+        const size = backdrop
+          ? 1 * this.options.size
+          : clamp(
+              (1.1 + (candidate.luma / 255) * 1.9) * spacingFactor,
+              1,
+              2.8,
+            ) * this.options.size;
+        const tone = candidate.luma / 255;
+        const baseAlpha = backdrop
+          ? lightTheme
+            ? 0.05
+            : 0.16
+          : 0.55 + tone * 0.45;
         const themed = themePalette
           ? mixRgb(
               themePalette.base,
@@ -892,11 +923,13 @@ class ParticleImage {
               candidate.luma / 255,
             )
           : null;
-        const color = themed
-          ? `rgb(${themed[0]}, ${themed[1]}, ${themed[2]})`
-          : this.options.dotColor === 'source'
-            ? `rgb(${candidate.r}, ${candidate.g}, ${candidate.b})`
-            : this.options.dotColor;
+        const color = backdrop
+          ? `rgb(${Math.round(candidate.r * 0.3)}, ${Math.round(candidate.g * 0.34)}, ${Math.round(candidate.b * 0.42)})`
+          : themed
+            ? `rgb(${themed[0]}, ${themed[1]}, ${themed[2]})`
+            : this.options.dotColor === 'source'
+              ? `rgb(${candidate.r}, ${candidate.g}, ${candidate.b})`
+              : this.options.dotColor;
 
         const x = tx + randomBetween(-32, 32);
         const y = ty + randomBetween(-32, 32);
@@ -917,7 +950,7 @@ class ParticleImage {
           alpha: 0,
           baseAlpha,
           phase: Math.random() * TAU,
-          glow: candidate.luma > 205 && Math.random() < 0.08,
+          glow: !backdrop && candidate.luma > 205 && Math.random() < 0.08,
         });
       }
     } else {
@@ -1291,6 +1324,7 @@ class ParticleImage {
   private hideImage() {
     this.image.classList.add('is-particleized');
     this.image.classList.remove('is-particle-pending');
+    this.canvas.classList.add('is-ready');
   }
 
   private queueResize() {

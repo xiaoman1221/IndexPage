@@ -169,6 +169,13 @@ export interface RawContactConfig {
   email?: string;
   line?: string;
   lineEmoji?: string;
+  lead?: string;
+  availability?: string;
+  response?: string;
+  base?: string;
+  language?: string;
+  panelNote?: string;
+  protocol?: Array<{ label: string; text: string }>;
   links?: RawContactLinkConfig[];
 }
 
@@ -182,6 +189,7 @@ export interface RawParticleImageConfig {
   dotMatrix?: boolean;
   dotSpacing?: number;
   dotColor?: string;
+  includeBackground?: boolean;
 }
 
 export interface RawParticleMorphConfig {
@@ -518,6 +526,16 @@ const resolveConfig = (raw: RawSiteConfig) => {
       email: raw.contact.email ?? '',
       line: raw.contact.line ?? '',
       lineEmoji: raw.contact.lineEmoji ?? '',
+      lead: raw.contact.lead ?? '',
+      availability: raw.contact.availability ?? '',
+      response: raw.contact.response ?? '',
+      base: raw.contact.base ?? '',
+      language: raw.contact.language ?? '',
+      panelNote: raw.contact.panelNote ?? '',
+      protocol: (raw.contact.protocol ?? []).map((step) => ({
+        label: step.label,
+        text: step.text,
+      })),
       links: (raw.contact.links ?? []).map((link, position) => ({
         no: link.no ?? pad(position + 1),
         label: link.label,

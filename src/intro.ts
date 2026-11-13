@@ -246,7 +246,7 @@ const prepareIntro = (): IntroRun | null => {
       oy: outlinePoint.y + randomBetween(-0.9, 0.9),
       fx: fillPoint.x,
       fy: fillPoint.y,
-      size: randomBetween(narrow ? 1.05 : 1.15, narrow ? 2.1 : 2.4),
+      size: randomBetween(narrow ? 0.75 : 0.85, narrow ? 1.5 : 1.75),
       alpha: randomBetween(0.45, 1),
       phase: Math.random() * Math.PI * 2,
       delay: randomBetween(0, 0.3),

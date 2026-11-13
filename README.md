@@ -64,7 +64,7 @@ config.json  →  src/config.ts（补全默认值与派生数据）  →  src/re
 | `profile` | 个人档案、一言引用、数据、头像、ID 卡字段 |
 | `capabilities` | 能力列表、标签、进度值、描边文字 |
 | `works` | 作品卡片：标题、链接、封面图、标签、强调色 |
-| `contact` | 邮箱、寄语、联系卡片（`value` 可省略，自动取域名） |
+| `contact` | 邮箱、寄语、联系卡片、通信面板（状态 / 回复 / 本地时间）与来信须知（`value` 可省略，自动取域名） |
 | `techStack` | 技术栈文字：背景点阵词 + 能力区可见 chips + Hero 换词词表 |
 | `ticker` | 页脚上方滚动文字 |
 | `footer` | 版权、ICP/公安备案入口（可选）、自定义链接、来源标注、回到顶部文案 |
@@ -88,7 +88,7 @@ config.json  →  src/config.ts（补全默认值与派生数据）  →  src/re
 - 站内跳转写 `#profile`、`#works` 等锚点；
 - 站外链接写 `https://…` 即可，渲染时会自动加上 `target="_blank"` 与 `rel="noreferrer"`；
 - 需要强制新窗口 / 同窗口时，再显式写 `external: true` / `false`；
-- 邮箱会自动生成 `mailto:`；
+- 邮箱会自动生成 `mailto:`；`contact.lead` 是邮箱下方的补充说明，`availability` / `response` / `base` / `language` / `panelNote` 填充右侧通信面板，`protocol[]`（`label` + `text`）渲染为底部三列来信须知；`COPY EMAIL` 复制邮箱，`OPEN MAIL` 打开邮件客户端。
 - 渲染层会过滤 `javascript:` 等不安全的协议。
 
 ### 图片
@@ -153,7 +153,7 @@ config.json  →  src/config.ts（补全默认值与派生数据）  →  src/re
 
 - 引用以**终端窗口**呈现：标题栏、`manjiuqi@ink:~$ hitokoto --random` 命令回显、`ONLINE / SYNCING / OFFLINE` 状态、底部可输入的命令行，右上角 `↻ rerun` 可重新请求。
 - 命令行支持基础命令：`help` / `?` 列出命令，`hitokoto` / `refresh` / `rerun` / `quote` 换一句，`clear` / `cls` 清屏并回到当前句子，`whoami`、`about`、`date`、`echo <text>` 输出相应信息；未知命令提示输入 `help`。
-- 输入区支持 `↑` / `↓` 历史、`Tab` 补全、`Esc` 关闭输出并失焦、`Ctrl/Cmd + L` 清屏；命令输入是带标签的真实 `input`，输出区为 `role="status"` 的 `aria-live` 区域，移动端聚焦不会触发页面缩放。
+- 输入区支持 `↑` / `↓` 历史、`Tab` 补全、`Esc` 关闭输出并失焦、`Ctrl/Cmd + L` 清屏；点击终端任意非交互区域即可聚焦输入，命令行右侧的 `RUN` 按钮可在移动端 / 输入法组合状态下直接执行；命令输入是带标签的真实 `input`，输出区为 `role="status"` 的 `aria-live` 区域，移动端聚焦不会触发页面缩放。
 - 正文使用**打字机逐字输出**：先按最终文本预留高度避免跳动，再以约 10–28ms/字的节奏显示；输出完成后出处 / 作者淡入。
 - 文字背后叠加**粒子光晕**（`src/quoteParticles.ts`）：按终端的等宽字体与换行栅格化字形，粒子绘制在文字下层并做轻微模糊与放大，颜色随主题切换；换一句时旧粒子淡出、新字形重新生成。
 - 打字期间光晕会暂停，避免每个字符都重建；`particles.quote.max` 控制点数上限。
@@ -243,20 +243,20 @@ config.json  →  src/config.ts（补全默认值与派生数据）  →  src/re
     "dotColor": "source",
     "morph": { "interval": 5.5, "scatter": 1.6, "gather": 1.9, "hold": 2 },
     "quote": { "max": 2600 },
-    "hero": { "max": 12000, "dotSpacing": 2, "blend": "lighter" },
-    "avatar": { "max": 12000, "size": 1.3 },
-    "works": { "max": 6000, "size": 1.6 }
+    "hero": { "max": 12000, "dotSpacing": 2, "size": 1.1, "blend": "lighter" },
+    "avatar": { "max": 14000, "size": 1.2, "dotSpacing": 3.25, "includeBackground": true },
+    "works": { "max": 6000, "size": 1.35, "dotSpacing": 5 }
   }
 }
 ```
 
-- `dotSpacing`：点阵网格间距（px），越小越密；Hero 可在 `particles.hero.dotSpacing` 单独覆盖（当前 `2`，约 12000 点）。
+- `dotSpacing`：点阵网格间距（px），越小越密；Hero 可在 `particles.hero.dotSpacing` 单独覆盖（当前 `2`，约 12000 点），头像当前 `3.25`，约 11000–12000 点。
 - `dotColor: "source"`：点使用图片原始颜色；也可填 `#ffffff` 之类的固定颜色。
-- `max`：单张图片的安全上限；实际数量由图像特征与内容占用像素决定。
-- `size` / `interactive` / `scatter`：点尺寸倍数、鼠标响应与散开力度，默认 `1.2` / `true` / `1.2`。
+- `max`：单张图片的安全上限；实际数量由图像特征与内容占用像素决定。`includeBackground`（默认 `false`）会把图片自带的背景一起纳入采样；头像开启后整张卡片都是点阵，平坦浅色背景会自动降透明度、压暗并偏冷色，浅色主题下进一步减淡，避免盖住人物。
+- `size` / `interactive` / `scatter`：点尺寸倍数、鼠标响应与散开力度，默认 `1` / `true` / `1.2`。所有粒子整体收细后，点阵密度相应提高以保持亮度。
 - `enabled`（总开关，默认 `true`）、`density`（密度倍率，默认 `1`）、`dotMatrix`（默认 `true`）省略即使用默认值。
 
-桌面高档实测：Hero 约 12000 点（受 `hero.max` 限制）、头像约 4000–6000 点、作品封面约 1800–3500 点。
+桌面高档实测：Hero 约 12000 点（受 `hero.max` 限制）、头像约 11000–12000 点（含背景）、作品封面约 2000–4500 点。本轮同时收细了入场/转场、一言光晕、漂浮粒子与地形粒子的尺寸。
 
 #### Hero 点阵文字
 
@@ -283,13 +283,13 @@ Hero 右侧的点阵每隔一段时间会**先打散到整个 Hero 视口，再�
 - 非当前模块会设置 `inert`，不进入 Tab 焦点与读屏顺序；地址栏同步为 `#home`、`#profile` … `#footer`，可直接深链到任意模块；
 - `prefers-reduced-motion` 下取消滑动过渡与粒子转场，模块瞬间切换。
 
-粒子转场使用 [pager.ts](src/pager.ts) 的预计算缓存：每个模块的文字在浏览器空闲时栅格化为点数有限的 glyph 目标，切换时只做位移与绘制，不在主线程重新采样。`assembly` 配置只在分页不可用时作为回退。
+图片与粒子场之间使用交叉淡入淡出：图片先以轻微模糊的低透明度作为底，粒子画布再淡入；入场结束与分页换节时，页面/文字的透明度过渡也拉长并提前开始，避免粒子淡出后元素突然出现。粒子转场使用 [pager.ts](src/pager.ts) 的预计算缓存：每个模块的文字在浏览器空闲时栅格化为点数有限的 glyph 目标，切换时只做位移与绘制，不在主线程重新采样。`assembly` 配置只在分页不可用时作为回退。
 
 #### 移动端适配
 
 - 入场文字粒子组装：`< 720px` 时粒子预算从 6500 降至 3000，矩阵停留与飞行时长同步缩短；
 - Hero 换词：触摸设备无法 hover，**点击字形区域**即可触发下一次打散换词；移动端降低 `hero-media` 透明度，避免粒子干扰文案阅读；
-- 作品轮播：保留原生触摸横向滑动；`(pointer: coarse)` 下滚动条触控高度增至 20px，把手常显；
+- 作品轮播：保留原生触摸横向滑动与 CSS 吸附；鼠标离开列表后滚轮才交给整屏分页；`(pointer: coarse)` 下滚动条触控高度增至 20px，把手常显；
 - 一言粒子光晕：移动端粒子上限降为 1600，减少开销；
 - 小节粒子组装：移动端复用 `assembly.max`，并在 `prefers-reduced-motion` 下关闭；
 - 浮动 `BACK TO TOP`：触摸设备最小触控高度 40px；
@@ -474,7 +474,7 @@ UI 强调色为蓝色 `#0066FF`，`scene.accent` 仍保留荧光黄作为地形/
 | 角色立绘/图标 | 内容图片转为 1px 彩色点阵；Logo/HUD 图标保持清晰；技术栈为普通文字 |
 | 3D 空间感 | CSS 3D 全息立方体、卡片 tilt、章节 3D 入场、3D 跑马灯 |
 | 军事 HUD 细节 | 蓝图网格、遥测条、HUD 角标、状态序列号、扫描线、准星光标 |
-| Swiper 轮播 | 原生 `overflow-x` + `scroll-snap` + 按钮/拖拽/键盘控制；鼠标悬停作品列表时滚轮转为横向滚动，底部滚动条可拖动，到达两端后恢复页面滚动 |
+| Swiper 轮播 | 原生 `overflow-x` + CSS `scroll-snap`（`scroll-snap-stop: always`）+ 按钮/拖拽/键盘控制；鼠标在作品列表上时滚轮切换一张卡片，到两端保持不动，移出列表后滚轮恢复整屏分页；触控板横向手势走原生滚动，底部滚动条可拖动 |
 | 分节编号 `Si // 01` | `00 INDEX` … `04 CONTACT` 的导航、侧栏与章节编号 |
 | 公告 / 信息流 | 底部文字 ticker + 滚动进度条 |
 

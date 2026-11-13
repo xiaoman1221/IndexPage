@@ -5,7 +5,7 @@
     "description": "满久琦（小满1221）· 运维、学生、开发、博主。天上如是，地下亦然。"
   },
   "theme": {
-    "accent": "#0066FF"
+    "accent": "#00ff00"
   },
   "brand": {
     "name": "小满1221",
@@ -29,7 +29,7 @@
   ],
   "rail": {
     "line1": "SYS.ONLINE",
-    "line2": "CN-HH / 40.84°N"
+    "line2": "CN-HET / 40.84°N"
   },
   "boot": {
     "kicker": "满久琦 // PERSONAL ARCHIVE",
@@ -53,9 +53,9 @@
       "hold": 2
     },
     "quote": { "max": 2600 },
-    "hero": { "max": 12000, "dotSpacing": 2, "blend": "lighter" },
-    "avatar": { "max": 12000, "size": 1.3 },
-    "works": { "max": 6000, "size": 1.6 }
+    "hero": { "max": 12000, "dotSpacing": 2, "size": 1.05, "blend": "lighter" },
+    "avatar": { "max": 12000, "size": 1, "dotSpacing": 3.5, "includeBackground": true },
+    "works": { "max": 6000, "size": 1.15, "dotSpacing": 5 }
   },
   "hero": {
     "image": "/images/hero.svg",
@@ -151,7 +151,7 @@
       {
         "title": "创作",
         "titleEn": "CREATOR",
-        "description": "写博客、做内容、处理图像与视频；92 篇文章，持续记录学习、运维与生活。",
+        "description": "写博客、做内容、处理图像与视频；持续记录学习、运维与生活。",
         "tags": ["Writing", "Photoshop", "Blog", "字幕组"],
         "level": 82
       },
@@ -169,14 +169,14 @@
     "titleEn": "PROJECTS",
     "note": "// SELECTED LINKS",
     "quoteHtml": "技术宅拯救世界！<br>爱与和平！",
-    "hint": "DRAG / SWIPE HORIZONTALLY · 横向拖动查看更多",
+    "hint": "WHEEL / SWIPE HORIZONTALLY · 滚轮或拖动查看更多",
     "items": [
       {
         "title": "小满的墨水瓶",
         "description": "运行 3247 天的个人博客，92 篇文章，记录运维、开发与生活。",
         "client": "你好，很高兴认识你 👋",
         "href": "https://www.yhdzz.cn/",
-        "image": "/images/works/blog.svg",
+        "image": "https://static.yhdzz.cn/imgs/indexpage/ink-index.png",
         "tags": ["BLOG", "92 POSTS"],
         "accent": "#0066FF"
       },
@@ -185,7 +185,7 @@
         "description": "基于 Go 的一言 API 项目，随手记录灵感与句子。",
         "client": "Open Source / HitokotoGo",
         "href": "https://github.com/xiaoman1221/HitokotoGo",
-        "image": "/images/works/github.svg",
+        "image": "https://static.yhdzz.cn/imgs/indexpage/hitokotogo-index.png",
         "tags": ["GO", "API"],
         "accent": "#ff3ea5"
       },
@@ -193,9 +193,18 @@
         "title": "小满网盘",
         "description": "个人网盘与文件分享空间。",
         "client": "FreeImage / 随时存取",
-        "href": "https://www.freeima.com/",
-        "image": "/images/works/image-bed.svg",
+        "href": "https://pan.yhdzz.cn/",
+        "image": "https://static.yhdzz.cn/imgs/indexpage/cloudreve-index.png",
         "tags": ["CLOUD", "STORAGE"],
+        "accent": "#49ffb8"
+      },
+      {
+        "title": "小满图床",
+        "description": "个人网盘与文件分享空间。",
+        "client": "FreeImage / 随时存取",
+        "href": "https://www.freeima.com/",
+        "image": "https://static.yhdzz.cn/imgs/indexpage/freeima-index.png",
+        "tags": ["FREE", "IMAGE"],
         "accent": "#49ffb8"
       },
       {
@@ -218,6 +227,17 @@
     "email": "im@manjiuqi.com",
     "line": "你好，很高兴认识你。",
     "lineEmoji": "👋",
+    "lead": "不管是项目合作、技术交流，还是只是想聊聊最近在读什么，都欢迎写信。",
+    "availability": "AVAILABLE FOR WORK",
+    "response": "通常 24 小时内回复",
+    "base": "中国 · 呼和浩特 / UTC+8",
+    "language": "中文 / English",
+    "panelNote": "运维、前端、写作、合作，或者只是打个招呼。",
+    "protocol": [
+      { "label": "SUBJECT / 主题", "text": "一句话说明来意，方便快速判断。" },
+      { "label": "CONTEXT / 背景", "text": "附上链接、截图或复现步骤。" },
+      { "label": "REPLY / 回复", "text": "通常 24 小时内，节假日可能稍慢。" }
+    ],
     "links": [
       { "label": "BLOG / 博客", "href": "https://www.yhdzz.cn/" },
       { "label": "GITHUB / 代码", "href": "https://github.com/xiaoman1221" },
