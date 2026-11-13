@@ -7,6 +7,8 @@
  * language used across Arknights' official site and HUD.
  */
 
+import { readThemeColors } from './theme';
+
 const TAU = Math.PI * 2;
 const MAX_SAMPLE = 480;
 const MIN_QUALITY = 0.32;
@@ -133,6 +135,18 @@ const resetMonitor = () => {
   highStrikes = 0;
 };
 
+/** Pause every image particle canvas (used while the entry animation runs). */
+export const setParticlesPaused = (value: boolean) => {
+  paused = value;
+  if (value) {
+    cancelAnimationFrame(frameRequest);
+    frameRequest = 0;
+    resetMonitor();
+  } else {
+    wake();
+  }
+};
+
 
 interface Particle {
   x: number;
@@ -255,9 +269,10 @@ const mixRgb = (from: Rgb, to: Rgb, amount: number): Rgb => [
 const registry = new Set<ParticleImage>();
 let frameRequest = 0;
 let lastFrame = 0;
+let paused = false;
 
 const wake = () => {
-  if (frameRequest || document.hidden) return;
+  if (paused || frameRequest || document.hidden) return;
   lastFrame = performance.now();
   frameRequest = requestAnimationFrame(frame);
 };
@@ -531,9 +546,10 @@ class ParticleImage {
   private readThemePalette(): { base: Rgb; light: Rgb } {
     const style = getComputedStyle(document.documentElement);
     const accent = hexToRgb(style.getPropertyValue('--acid'), [230, 255, 46]);
+    const { mix } = readThemeColors();
     return {
-      base: mixRgb(accent, [255, 255, 255], 0.14),
-      light: mixRgb(accent, [255, 255, 255], 0.66),
+      base: mixRgb(accent, mix, 0.14),
+      light: mixRgb(accent, mix, 0.66),
     };
   }
 
@@ -545,9 +561,10 @@ class ParticleImage {
     const style = getComputedStyle(document.documentElement);
     const accent = hexToRgb(style.getPropertyValue('--acid'), [230, 255, 46]);
     const ink = hexToRgb(style.getPropertyValue('--ink'), [237, 237, 228]);
-    // Lift the theme accent a little so blue dots stay legible on the dark bg.
-    const theme = mixRgb(accent, [255, 255, 255], 0.18);
-    const light = mixRgb(accent, [255, 255, 255], 0.62);
+    const { mix } = readThemeColors();
+    // Lift the theme accent a little so the dots stay legible on either scheme.
+    const theme = mixRgb(accent, mix, 0.18);
+    const light = mixRgb(accent, mix, 0.62);
 
     for (const particle of this.particles) {
       const roll = Math.random();
@@ -975,7 +992,7 @@ class ParticleImage {
     this.failed = true;
     this.built = false;
     this.canvas.remove();
-    this.image.classList.remove('is-particleized');
+    this.image.classList.remove('is-particleized', 'is-particle-pending');
     this.container.classList.remove('has-particles');
     this.resizeObserver.disconnect();
     this.intersectionObserver.disconnect();
@@ -1273,6 +1290,7 @@ class ParticleImage {
 
   private hideImage() {
     this.image.classList.add('is-particleized');
+    this.image.classList.remove('is-particle-pending');
   }
 
   private queueResize() {
@@ -1334,6 +1352,7 @@ const startParticles = (
     new ParticleImage(source, target, container, options);
     target.dataset.particlesReady = '1';
   } catch (error) {
+    target.classList.remove('is-particle-pending');
     console.warn('[particles] image effect disabled:', error);
   }
 };
@@ -1344,9 +1363,21 @@ const whenLoaded = (
 ) => {
   if (!image) return;
 
+  // Hide the raw bitmap until the particle field replaces it, so an image is
+  // never flashed in its original form while the field is still building.
+  image.classList.add('is-particle-pending');
+  image.addEventListener(
+    'error',
+    () => image.classList.remove('is-particle-pending'),
+    { once: true },
+  );
+
   const init = () => {
     const url = image.currentSrc || image.src;
-    if (!url) return;
+    if (!url) {
+      image.classList.remove('is-particle-pending');
+      return;
+    }
 
     if (!isCrossOrigin(url)) {
       startParticles(image, image, options);
@@ -1365,7 +1396,10 @@ const whenLoaded = (
     );
     probe.addEventListener(
       'error',
-      () => console.warn('[particles] CORS unavailable, keeping image:', url),
+      () => {
+        image.classList.remove('is-particle-pending');
+        console.warn('[particles] CORS unavailable, keeping image:', url);
+      },
       { once: true },
     );
     probe.src = url;

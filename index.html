@@ -4,11 +4,22 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="theme-color" content="#0066FF" />
-    <meta name="color-scheme" content="dark" />
+    <meta name="color-scheme" content="light dark" />
     <meta
       name="description"
       content="满久琦（小满1221）· 运维、学生、开发、博主。天上如是，地下亦然。"
     />
+    <meta property="og:type" content="website" />
+    <meta property="og:locale" content="zh_CN" />
+    <meta
+      property="og:title"
+      content="满久琦 · 小满1221 | Xiaoman's Ink"
+    />
+    <meta
+      property="og:description"
+      content="满久琦（小满1221）· 运维、学生、开发、博主。天上如是，地下亦然。"
+    />
+    <meta name="twitter:card" content="summary" />
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
     <link
       rel="preload"
@@ -127,7 +138,7 @@
 
     <!-- 顶部导航 -->
     <header class="site-header" id="site-header">
-      <a class="brand" href="#home" aria-label="安知鱼 首页">
+      <a class="brand" href="#home" aria-label="小满1221 首页">
         <span class="brand-mark" id="brand-mark" aria-hidden="true">
           <svg viewBox="0 0 40 40" fill="none">
             <path d="M20 2 38 20 20 38 2 20 20 2Z" stroke="currentColor" />
@@ -148,11 +159,11 @@
         <a
           class="hud-btn"
           id="header-cta"
-          href="https://blog.anheyu.com"
+          href="https://www.yhdzz.cn/"
           target="_blank"
           rel="noreferrer"
         >
-          <span id="header-cta-label">BLOG</span><i>↗</i>
+          <span id="header-cta-label">BLOG</span><i aria-hidden="true">↗</i>
         </a>
         <button
           class="menu-btn"
@@ -291,21 +302,57 @@
               data-reveal
               style="--d: 0.08s"
             ></p>
-            <figure class="quote-card" data-reveal style="--d: 0.16s">
-              <span class="quote-mark" aria-hidden="true">“</span>
-              <button
-                class="quote-refresh"
-                id="quote-refresh"
-                type="button"
-                aria-label="换一句一言"
-                hidden
-              >
-                <span aria-hidden="true">↻</span> 换一句
-              </button>
-              <blockquote id="quote-text"></blockquote>
-              <figcaption>
-                <span id="quote-source"></span><i id="quote-author"></i>
-              </figcaption>
+            <figure class="quote-terminal" data-reveal style="--d: 0.16s">
+              <div class="qt-bar">
+                <span class="qt-dots" aria-hidden="true"><i></i><i></i><i></i></span>
+                <span class="qt-title">hitokoto — ~/quote</span>
+                <span class="qt-state" id="quote-state">ONLINE</span>
+                <button
+                  class="quote-refresh"
+                  id="quote-refresh"
+                  type="button"
+                  aria-label="换一句一言"
+                  hidden
+                >
+                  <span aria-hidden="true">↻</span> rerun
+                </button>
+              </div>
+              <div class="qt-screen">
+                <p class="qt-command" aria-hidden="true">
+                  <span class="qt-user">xiaoman@ink</span><span class="qt-sep">:</span><span class="qt-path">~</span><span class="qt-prompt">$</span><span class="qt-cmd">hitokoto --random</span>
+                </p>
+                <div class="qt-body" id="quote-body">
+                  <blockquote id="quote-text"></blockquote>
+                  <figcaption class="qt-meta" id="quote-meta">
+                    <span id="quote-source"></span><i id="quote-author"></i>
+                  </figcaption>
+                </div>
+                <div
+                  class="qt-output"
+                  id="quote-output"
+                  role="status"
+                  aria-live="polite"
+                  hidden
+                ></div>
+                <p class="qt-prompt-line">
+                  <span class="qt-user" aria-hidden="true">xiaoman@ink</span><span class="qt-sep" aria-hidden="true">:</span><span class="qt-path" aria-hidden="true">~</span><span class="qt-prompt" aria-hidden="true">$</span>
+                  <span class="qt-input-wrap">
+                    <input
+                      id="quote-input"
+                      class="qt-input"
+                      type="text"
+                      autocomplete="off"
+                      autocapitalize="off"
+                      autocorrect="off"
+                      spellcheck="false"
+                      enterkeyhint="go"
+                      aria-label="终端命令输入，输入 help 查看可用命令"
+                    />
+                    <span class="qt-typed" id="quote-typed" aria-hidden="true"></span>
+                    <span class="qt-caret" aria-hidden="true"></span>
+                  </span>
+                </p>
+              </div>
             </figure>
             <div
               class="profile-stats"
@@ -458,12 +505,12 @@
           <a
             class="mail-link"
             id="contact-email"
-            href="mailto:me@anheyu.com"
+            href="mailto:im@manjiuqi.com"
             data-reveal
             style="--d: 0.06s"
           >
             <span id="contact-email-text"></span>
-            <i aria-hidden="true">↗</i>
+            <i>↗</i>
           </a>
           <p
             class="contact-line"
@@ -480,20 +527,27 @@
           ></div>
         </div>
       </section>
-    </main>
+      <!-- 05 页脚 -->
+      <div class="slide slide-footer" id="footer" data-slide="footer">
+        <div class="footer-wordmark" aria-hidden="true">
+          <span>XIAOMAN'S INK</span>
+          <small>AS ABOVE / SO BELOW</small>
+        </div>
 
-    <div class="ticker" aria-hidden="true">
-      <div class="ticker-track" id="ticker-track"></div>
-    </div>
+        <div class="ticker" aria-hidden="true">
+          <div class="ticker-track" id="ticker-track"></div>
+        </div>
 
-    <footer class="site-footer">
-      <div class="footer-inner">
-        <span class="footer-copy" id="footer-copy"></span>
-        <span class="footer-meta" id="footer-credits"></span>
-        <a class="footer-top" id="footer-top" href="#home"></a>
+        <footer class="site-footer">
+          <div class="footer-inner">
+            <span class="footer-copy" id="footer-copy"></span>
+            <span class="footer-meta" id="footer-credits"></span>
+            <a class="footer-top" id="footer-top" href="#home"></a>
+          </div>
+          <div class="footer-filings" id="footer-filings"></div>
+        </footer>
       </div>
-      <div class="footer-filings" id="footer-filings"></div>
-    </footer>
+    </main>
 
     <a class="back-top" id="back-top" href="#home" aria-label="回到顶部">
       <span>BACK TO TOP</span>

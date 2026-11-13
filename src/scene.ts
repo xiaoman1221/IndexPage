@@ -6,10 +6,11 @@
  * is drawn with Canvas 2D instead of a WebGL engine.
  */
 
+import { readThemeColors, rgbTriplet, watchColorScheme } from './theme';
+
 const TAU = Math.PI * 2;
 const FALLBACK_ACCENT = '230, 255, 46';
 const FALLBACK_GLOW = '255, 255, 150';
-const INK = '237, 237, 228';
 
 export interface SceneOptions {
   enabled?: boolean;
@@ -68,6 +69,7 @@ export class BackgroundScene {
   private readonly reduced: boolean;
   private readonly accent: string;
   private readonly glow: string;
+  private ink = rgbTriplet(readThemeColors().ink);
 
   private width = 0;
   private height = 0;
@@ -107,6 +109,7 @@ export class BackgroundScene {
     this.buildTechWords(options.techStack ?? []);
     this.resize();
 
+    watchColorScheme(this.handleTheme);
     window.addEventListener('resize', this.handleResize, { passive: true });
     window.addEventListener('scroll', this.handleScroll, { passive: true });
     window.addEventListener('pointermove', this.handlePointer, { passive: true });
@@ -117,6 +120,17 @@ export class BackgroundScene {
     } else {
       this.start();
     }
+  }
+
+  private handleTheme = () => {
+    this.ink = rgbTriplet(readThemeColors().ink);
+    if (this.reduced) this.render(1 / 60);
+  };
+
+  setPaused(paused: boolean) {
+    if (this.reduced) return;
+    if (paused) this.stop();
+    else this.start();
   }
 
   private handleResize = () => {
@@ -316,7 +330,7 @@ export class BackgroundScene {
         word.opacity * (0.7 + 0.3 * Math.sin(time * 0.24 + word.phase));
 
       ctx.font = `600 ${word.fontSize}px "JetBrains Mono", monospace`;
-      ctx.fillStyle = `rgba(${INK}, ${opacity})`;
+      ctx.fillStyle = `rgba(${this.ink}, ${opacity})`;
       ctx.fillText(word.text, x, y + word.fontSize);
     });
   }
@@ -336,7 +350,7 @@ export class BackgroundScene {
       if (particle.x > width + 10) particle.x = -10;
 
       const alpha = (0.06 + particle.z * 0.22) * (0.5 + 0.5 * Math.sin(this.time + particle.phase));
-      ctx.fillStyle = `rgba(${INK}, ${alpha})`;
+      ctx.fillStyle = `rgba(${this.ink}, ${alpha})`;
       ctx.fillRect(particle.x, particle.y, particle.size, particle.size);
     }
   }
@@ -389,7 +403,7 @@ export class BackgroundScene {
       const alpha = 0.03 + (1 - depth) * 0.16 + band * 0.34;
       const size = 1.1 + (1 - depth) * 1.5 + band * 1.7;
 
-      ctx.fillStyle = `rgba(${INK}, ${alpha})`;
+      ctx.fillStyle = `rgba(${this.ink}, ${alpha})`;
 
       for (let column = 0; column < columns; column += 1) {
         const point = grid[row][column];
@@ -450,7 +464,7 @@ export class BackgroundScene {
     ) => {
       ctx.save();
       ctx.rotate(rotation);
-      ctx.fillStyle = `rgba(${INK}, ${opacity})`;
+      ctx.fillStyle = `rgba(${this.ink}, ${opacity})`;
       for (let index = 0; index < count; index += 1) {
         const angle = (index / count) * TAU;
         const x = Math.cos(angle) * rx;
@@ -510,7 +524,7 @@ export class BackgroundScene {
         dot(
           centerX + a.x + (b.x - a.x) * t,
           centerY + a.y + (b.y - a.y) * t,
-          INK,
+          this.ink,
           opacity,
           1.25,
         );
@@ -522,7 +536,7 @@ export class BackgroundScene {
       dot(
         centerX + point.x,
         centerY + point.y,
-        INK,
+        this.ink,
         alpha * (0.3 + (1 - point.depth) * 0.32),
         size,
       );

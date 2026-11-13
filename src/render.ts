@@ -2,8 +2,6 @@ import type {
   AvatarConfig,
   CapabilityItemConfig,
   ContactLinkConfig,
-  FooterFilingConfig,
-  FooterSegmentConfig,
   IdFieldConfig,
   ProfileStatConfig,
   SiteConfig,
@@ -163,11 +161,22 @@ const renderSectionHead = (prefix: string, section: SectionHead) => {
    -------------------------------------------------------------------------- */
 
 const renderMeta = (config: SiteConfig) => {
-  document.documentElement.lang = config.meta.lang || 'zh-CN';
+  document.documentElement.lang = config.meta.lang;
   document.title = config.meta.title;
 
   const description = $<HTMLMetaElement>('meta[name="description"]');
   if (description) description.content = config.meta.description;
+
+  const ogTitle = $<HTMLMetaElement>('meta[property="og:title"]');
+  if (ogTitle) ogTitle.content = config.meta.title;
+
+  const ogDescription = $<HTMLMetaElement>(
+    'meta[property="og:description"]',
+  );
+  if (ogDescription) ogDescription.content = config.meta.description;
+
+  const ogLocale = $<HTMLMetaElement>('meta[property="og:locale"]');
+  if (ogLocale) ogLocale.content = config.meta.lang.replace('-', '_');
 
   let themeColor = $<HTMLMetaElement>('meta[name="theme-color"]');
   if (!themeColor) {
@@ -184,7 +193,11 @@ const renderMeta = (config: SiteConfig) => {
   const accent = safeColor(config.theme.accent, '#e6ff2e');
   root.setProperty('--acid', accent);
   root.setProperty('--on-acid', readableOn(accent));
-  root.setProperty('--acid-soft', safeColor(config.theme.accentSoft, '#bfd41c'));
+
+  // The soft accent is optional: styles.css derives it from --acid when the
+  // config does not provide an explicit value.
+  const accentSoft = safeColor(config.theme.accentSoft, '');
+  if (accentSoft) root.setProperty('--acid-soft', accentSoft);
 };
 
 const renderBoot = (config: SiteConfig) => {
@@ -216,11 +229,17 @@ const renderBrand = (config: SiteConfig) => {
   const mark = $('#brand-mark');
   if (!logo || !mark) return;
 
+  // Keep the built-in vector diamond as a fallback for a broken logo URL.
+  const fallback = Array.from(mark.childNodes, (node) => node.cloneNode(true));
+
   const image = create('img');
   image.src = logo;
   image.alt = '';
   image.decoding = 'async';
-  image.addEventListener('error', () => image.remove());
+  image.addEventListener('error', () => {
+    image.remove();
+    mark.replaceChildren(...fallback);
+  });
   mark.replaceChildren(image);
 };
 
@@ -242,6 +261,7 @@ const renderNav = (config: SiteConfig) => {
       const link = create('a', `nav-link${index === 0 ? ' is-active' : ''}`);
       applyLink(link, item.href);
       link.dataset.nav = item.id;
+      link.setAttribute('aria-current', index === 0 ? 'location' : 'false');
       link.append(
         create('i', undefined, item.index),
         create('span', undefined, item.label),
@@ -386,52 +406,27 @@ const renderHero = (config: SiteConfig) => {
    Profile
    -------------------------------------------------------------------------- */
 
-export const daysSince = (iso: string): number => {
-  const start = new Date(`${iso}T00:00:00`);
-  if (Number.isNaN(start.getTime())) return 0;
-
-  const now = new Date();
-  const startDay = Date.UTC(
-    start.getFullYear(),
-    start.getMonth(),
-    start.getDate(),
-  );
-  const nowDay = Date.UTC(now.getFullYear(), now.getMonth(), now.getDate());
-  return Math.round((nowDay - startDay) / 86_400_000);
-};
-
-const resolveStatValue = (stat: ProfileStatConfig): string => {
-  if (stat.since) {
-    const days = daysSince(stat.since);
-    if (days > 0) return String(days);
-  }
-  return stat.value;
-};
-
 const renderStats = (container: Element | null, stats: ProfileStatConfig[]) => {
   if (!container) return;
 
+  const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   const fragment = document.createDocumentFragment();
+
   for (const stat of stats) {
     const row = create('div', 'stat');
     const value = create('b');
     const number = create('span', 'stat-number');
-    const resolved = resolveStatValue(stat);
 
-    number.dataset.value = resolved;
+    number.dataset.value = stat.value;
     if (stat.since) number.dataset.since = stat.since;
-    number.textContent = window.matchMedia(
-      '(prefers-reduced-motion: reduce)',
-    ).matches
-      ? resolved
-      : '0';
+    number.textContent = reduced ? stat.value : '0';
 
     value.append(number);
     if (stat.suffix) value.append(create('sup', undefined, stat.suffix));
     row.append(value, create('small', undefined, stat.label));
     row.setAttribute(
       'aria-label',
-      `${resolved}${stat.suffix ?? ''} ${stat.label}`,
+      `${stat.value}${stat.suffix ?? ''} ${stat.label}`,
     );
     fragment.append(row);
   }
@@ -446,7 +441,7 @@ const renderAvatar = (avatar: AvatarConfig) => {
   const caption = $('#id-caption');
 
   if (monogram) {
-    monogram.textContent = avatar.fallback ?? 'AZY';
+    monogram.textContent = avatar.fallback;
     monogram.hidden = false;
   }
   if (caption) caption.textContent = avatar.caption ?? '';
@@ -458,7 +453,7 @@ const renderAvatar = (avatar: AvatarConfig) => {
 
   const image = create('img', 'id-photo');
   image.src = src;
-  image.alt = avatar.alt ?? '';
+  image.alt = avatar.alt;
   image.decoding = 'async';
   image.addEventListener('error', () => {
     image.remove();
@@ -486,9 +481,23 @@ const renderIdFields = (container: Element | null, fields: IdFieldConfig[]) => {
   container.replaceChildren(fragment);
 };
 
+const renderQuoteTerminal = (config: SiteConfig) => {
+  const handle = `${config.brand.nameEn
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '')}@ink`;
+  document.querySelectorAll<HTMLElement>('.qt-user').forEach((element) => {
+    element.textContent = handle;
+  });
+  setText(
+    '#quote-state',
+    config.profile.quote.mode === 'hitokoto' ? 'ONLINE' : 'STATIC',
+  );
+};
+
 const renderProfile = (config: SiteConfig) => {
   const profile = config.profile;
   renderSectionHead('profile', profile);
+  renderQuoteTerminal(config);
 
   setRich('#profile-intro', profile.introHtml);
   setText('#profile-bio', profile.bio);
@@ -521,7 +530,7 @@ const renderCapItems = (items: CapabilityItemConfig[]) => {
     const main = create('div', 'cap-main');
     const heading = create('h3');
     heading.append(
-      document.createTextNode(item.title),
+      create('span', 'cap-title', item.title),
       create('small', undefined, item.titleEn),
     );
     main.append(heading, create('p', undefined, item.description));
@@ -614,7 +623,7 @@ const renderWorks = (config: SiteConfig) => {
     if (imageSrc) {
       const image = create('img', 'work-image');
       image.src = imageSrc;
-      image.alt = item.imageAlt ?? item.title;
+      image.alt = item.imageAlt;
       image.loading = 'lazy';
       image.decoding = 'async';
       image.addEventListener('error', () => image.remove());
@@ -696,6 +705,7 @@ const renderContact = (config: SiteConfig) => {
       '#',
     );
     setText('#contact-email-text', address);
+    if (address) mail.setAttribute('aria-label', address);
   }
 
   const line = $('#contact-line');
@@ -733,17 +743,12 @@ const renderTicker = (phrases: string[]) => {
 
 const renderFooter = (config: SiteConfig) => {
   const copy = $('#footer-copy');
-  if (copy) {
-    copy.textContent = config.footer.copyright.replace(
-      /\{year\}/g,
-      String(new Date().getFullYear()),
-    );
-  }
+  if (copy) copy.textContent = config.footer.copyright;
 
   const credits = $('#footer-credits');
   if (credits) {
     const fragment = document.createDocumentFragment();
-    for (const segment of config.footer.credits as FooterSegmentConfig[]) {
+    for (const segment of config.footer.credits) {
       if (segment.href) {
         const anchor = create('a', undefined, segment.text);
         applyLink(anchor, segment.href, segment.external);
@@ -766,14 +771,18 @@ const renderFooter = (config: SiteConfig) => {
 
   const filings = $('#footer-filings');
   if (filings) {
+    // ICP / police / custom links are optional; empty entries are hidden.
     const items = [
       config.footer.icp,
       config.footer.police,
       config.footer.customLink,
-    ].filter(
-      (item): item is FooterFilingConfig =>
-        Boolean(item?.label?.trim() && item.href?.trim()),
-    );
+    ]
+      .map((item) => ({
+        label: item?.label?.trim() ?? '',
+        href: item?.href?.trim() ?? '',
+        external: item?.external,
+      }))
+      .filter((item) => item.label !== '' && item.href !== '');
 
     const fragment = document.createDocumentFragment();
     items.forEach((item, index) => {

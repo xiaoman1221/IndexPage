@@ -8,11 +8,10 @@
  * with additive blending, so it never touches layout or hit-testing.
  */
 
+import { readThemeColors, watchColorScheme, type Rgb } from './theme';
+
 const TAU = Math.PI * 2;
 
-type Rgb = [number, number, number];
-
-const INK: Rgb = [237, 237, 228];
 const FALLBACK_ACCENT: Rgb = [230, 255, 46];
 const FALLBACK_GLOW: Rgb = [255, 255, 150];
 
@@ -68,7 +67,9 @@ class ParticleSwarm {
   private readonly reduced: boolean;
   private readonly density: number;
   private readonly interactive: boolean;
-  private readonly colors: Rgb[];
+  private colors: Rgb[] = [];
+  private accentColor: Rgb = FALLBACK_ACCENT;
+  private glowColor: Rgb = FALLBACK_GLOW;
 
   private motes: Mote[] = [];
   private width = 0;
@@ -102,14 +103,15 @@ class ParticleSwarm {
       (options.interactive ?? true) &&
       window.matchMedia('(pointer: fine)').matches;
 
-    const accent = hexToRgb(options.accent, FALLBACK_ACCENT);
-    const glow = hexToRgb(options.glow, FALLBACK_GLOW);
+    this.accentColor = hexToRgb(options.accent, FALLBACK_ACCENT);
+    this.glowColor = hexToRgb(options.glow, FALLBACK_GLOW);
     // Mostly quiet ink dust, with a minority of accent / glow sparks so the
     // layer reads as living signal instead of noise.
-    this.colors = [INK, INK, INK, INK, INK, INK, INK, glow, glow, accent];
+    this.colors = this.buildColors();
 
     this.resize();
 
+    watchColorScheme(this.handleTheme);
     window.addEventListener('resize', this.handleResize, { passive: true });
     if (this.interactive) {
       window.addEventListener('pointermove', this.handlePointer, {
@@ -133,6 +135,25 @@ class ParticleSwarm {
   }
 
   /* --------------------------------------------------------------- events */
+
+  private buildColors(): Rgb[] {
+    const ink = readThemeColors().ink;
+    return [ink, ink, ink, ink, ink, ink, ink, this.glowColor, this.glowColor, this.accentColor];
+  }
+
+  private handleTheme = () => {
+    this.colors = this.buildColors();
+    for (const mote of this.motes) {
+      mote.color = this.colors[Math.floor(Math.random() * this.colors.length)];
+    }
+    if (this.reduced) this.draw();
+  };
+
+  setPaused(paused: boolean) {
+    if (this.reduced) return;
+    if (paused) this.stop();
+    else this.start();
+  }
 
   private handleResize = () => {
     window.clearTimeout(this.resizeTimer);

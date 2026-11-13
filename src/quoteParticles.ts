@@ -7,8 +7,10 @@
  * The real text stays in the DOM for layout, selection and screen readers.
  */
 
+import { extractText } from './textRaster';
+import { readThemeColors, watchColorScheme } from './theme';
+
 const TAU = Math.PI * 2;
-const PARTICLE_COLOR = 'rgb(255, 255, 255)';
 
 export interface QuoteParticleOptions {
   enabled?: boolean;
@@ -39,29 +41,6 @@ const clamp = (value: number, min: number, max: number) =>
 const randomBetween = (min: number, max: number) =>
   min + Math.random() * (max - min);
 
-const extractText = (root: HTMLElement): string => {
-  let text = '';
-
-  const walk = (node: Node) => {
-    if (node.nodeType === Node.TEXT_NODE) {
-      text += node.textContent ?? '';
-      return;
-    }
-    if (node.nodeName === 'BR') {
-      text += '\n';
-      return;
-    }
-    node.childNodes.forEach(walk);
-  };
-
-  walk(root);
-
-  return text
-    .replace(/[ \t]+/g, ' ')
-    .replace(/ *\n */g, '\n')
-    .trim();
-};
-
 const wrapText = (
   ctx: CanvasRenderingContext2D,
   text: string,
@@ -88,7 +67,7 @@ const wrapText = (
   return lines;
 };
 
-class QuoteParticleText {
+export class QuoteParticleText {
   private readonly source: HTMLElement;
   private readonly card: HTMLElement;
   private readonly canvas: HTMLCanvasElement;
@@ -114,6 +93,8 @@ class QuoteParticleText {
   private resizeTimer = 0;
   private dirty = true;
   private hasParticles = false;
+  private suspended = false;
+  private color = '#ffffff';
 
   private readonly mutationObserver: MutationObserver;
   private readonly resizeObserver: ResizeObserver;
@@ -122,7 +103,7 @@ class QuoteParticleText {
   constructor(source: HTMLElement, options: QuoteParticleOptions = {}) {
     this.source = source;
     this.card =
-      (source.closest('.quote-card') as HTMLElement | null) ??
+      (source.closest('.quote-terminal') as HTMLElement | null) ??
       (source.parentElement as HTMLElement);
     this.max = clamp(Math.round(options.max ?? 2600), 200, 4000);
 
@@ -164,6 +145,7 @@ class QuoteParticleText {
     this.intersectionObserver.observe(this.card);
 
     document.addEventListener('visibilitychange', this.handleVisibility);
+    watchColorScheme(() => this.handleTheme());
 
     if (document.fonts) {
       void document.fonts.ready.then(() => this.queueUpdate());
@@ -173,6 +155,11 @@ class QuoteParticleText {
   }
 
   /* --------------------------------------------------------------- events */
+
+  private handleTheme = () => {
+    if (this.suspended) return;
+    this.queueUpdate();
+  };
 
   private handleVisibility = () => {
     if (document.hidden) {
@@ -186,12 +173,25 @@ class QuoteParticleText {
 
   private queueUpdate() {
     this.dirty = true;
+    if (this.suspended) return;
     window.clearTimeout(this.updateTimer);
     this.updateTimer = window.setTimeout(() => {
-      if (!this.visible) return;
+      if (!this.visible || this.suspended) return;
       this.build();
       this.start();
     }, 80);
+  }
+
+  /** Pause the halo while the typewriter is writing (no rebuild per keystroke). */
+  setSuspended(value: boolean) {
+    if (this.suspended === value) return;
+    this.suspended = value;
+    if (value) {
+      this.dirty = false;
+      this.disable();
+    } else {
+      this.queueUpdate();
+    }
   }
 
   private build() {
@@ -217,6 +217,7 @@ class QuoteParticleText {
     this.canvas.style.top = `${rect.top - cardRect.top - borderTop}px`;
     this.ctx.setTransform(this.dpr, 0, 0, this.dpr, 0, 0);
 
+    this.color = readThemeColors().quote;
     const points = this.sampleText(rect);
     if (!points || points.length < 24) {
       this.disable();
@@ -255,7 +256,7 @@ class QuoteParticleText {
         baseAlpha: randomBetween(0.6, 0.94),
         phase: Math.random() * TAU,
         twinkle: 0.6 + Math.random() * 1.4,
-        color: PARTICLE_COLOR,
+        color: this.color,
         glow: Math.random() < 0.04,
       });
     }

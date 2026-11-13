@@ -1,31 +1,39 @@
 /**
  * Page-entry text assembly.
  *
- * Once the boot screen finishes, the first screen starts as a full-page dot
- * matrix. Its particles then fly into the glyph pixels of every visible text
- * element, so the copy assembles as a particle image. When the motion settles,
- * the particles dissolve and the real DOM text fades in in the same place.
+ * As soon as the boot screen starts leaving, an opaque intro overlay hides the
+ * real page so it is never visible before the effect. The overlay first shows
+ * a breathing dot matrix, then traces the **outline** of every visible text
+ * element with particles, then fills the glyphs and finally dissolves into the
+ * real DOM text.
  *
  * The effect is skipped when the boot is skipped or reduced motion is on.
  */
 
-type Rgb = [number, number, number];
+import { rasterizeTextDetail, type GlyphPoint } from './textRaster';
+import { readThemeColors } from './theme';
 
-interface GlyphPoint {
-  x: number;
-  y: number;
-}
+type Rgb = [number, number, number];
 
 interface IntroParticle {
   sx: number;
   sy: number;
-  tx: number;
-  ty: number;
+  ox: number;
+  oy: number;
+  fx: number;
+  fy: number;
   size: number;
   alpha: number;
+  phase: number;
   delay: number;
+  fillDelay: number;
   color: string;
   glow: boolean;
+  trail: boolean;
+}
+
+interface IntroRun {
+  start: () => void;
 }
 
 const clamp = (value: number, min: number, max: number) =>
@@ -61,10 +69,11 @@ const easeOutCubic = (value: number) => 1 - Math.pow(1 - value, 3);
 const readPalette = () => {
   const style = getComputedStyle(document.documentElement);
   const accent = hexToRgb(style.getPropertyValue('--acid'), [230, 255, 46]);
+  const { mix } = readThemeColors();
   return {
     accent,
     ink: hexToRgb(style.getPropertyValue('--ink'), [237, 237, 228]),
-    light: mixRgb(accent, [255, 255, 255], 0.55),
+    light: mixRgb(accent, mix, 0.55),
   };
 };
 
@@ -95,161 +104,21 @@ const TEXT_SELECTOR = [
   '#rail-code',
 ].join(',');
 
-const extractText = (root: HTMLElement): string => {
-  let text = '';
-
-  const walk = (node: Node) => {
-    if (node.nodeType === Node.TEXT_NODE) {
-      text += node.textContent ?? '';
-      return;
-    }
-    if (node.nodeName === 'BR') {
-      text += '\n';
-      return;
-    }
-    node.childNodes.forEach(walk);
-  };
-
-  walk(root);
-
-  return text
-    .replace(/[ \t]+/g, ' ')
-    .replace(/ *\n */g, '\n')
-    .trim();
+const shuffle = <T>(items: T[]): T[] => {
+  for (let index = items.length - 1; index > 0; index -= 1) {
+    const swap = Math.floor(Math.random() * (index + 1));
+    [items[index], items[swap]] = [items[swap], items[index]];
+  }
+  return items;
 };
 
-const wrapText = (
-  ctx: CanvasRenderingContext2D,
-  text: string,
-  maxWidth: number,
-): string[] => {
-  const lines: string[] = [];
-
-  for (const paragraph of text.split('\n')) {
-    if (!paragraph) continue;
-
-    let line = '';
-    for (const char of Array.from(paragraph)) {
-      const next = line + char;
-      if (line && ctx.measureText(next).width > maxWidth) {
-        lines.push(line);
-        line = char.trimStart();
-      } else {
-        line = next;
-      }
-    }
-    if (line) lines.push(line);
-  }
-
-  return lines;
-};
-
-/**
- * Rasterise one element's text with its computed font and content box, then
- * return glyph pixels in viewport coordinates.
- */
-const rasterizeText = (element: HTMLElement): GlyphPoint[] => {
-  const rect = element.getBoundingClientRect();
-  const style = getComputedStyle(element);
-
-  if (
-    style.display === 'none' ||
-    style.visibility === 'hidden' ||
-    style.opacity === '0'
-  ) {
-    return [];
-  }
-
-  const borderLeft = Number.parseFloat(style.borderLeftWidth) || 0;
-  const borderRight = Number.parseFloat(style.borderRightWidth) || 0;
-  const borderTop = Number.parseFloat(style.borderTopWidth) || 0;
-  const borderBottom = Number.parseFloat(style.borderBottomWidth) || 0;
-  const paddingLeft = Number.parseFloat(style.paddingLeft) || 0;
-  const paddingRight = Number.parseFloat(style.paddingRight) || 0;
-  const paddingTop = Number.parseFloat(style.paddingTop) || 0;
-  const paddingBottom = Number.parseFloat(style.paddingBottom) || 0;
-
-  const contentWidth =
-    rect.width - borderLeft - borderRight - paddingLeft - paddingRight;
-  const contentHeight =
-    rect.height - borderTop - borderBottom - paddingTop - paddingBottom;
-
-  if (contentWidth < 2 || contentHeight < 2) return [];
-
-  const text = extractText(element);
-  if (!text) return [];
-
-  const fontSize = Number.parseFloat(style.fontSize) || 16;
-  const lineHeight = Number.parseFloat(style.lineHeight) || fontSize * 1.5;
-  const fontWeight = style.fontWeight || '400';
-  const fontFamily = style.fontFamily || 'sans-serif';
-
-  const canvas = document.createElement('canvas');
-  canvas.width = Math.max(1, Math.ceil(contentWidth));
-  canvas.height = Math.max(1, Math.ceil(contentHeight));
-  const ctx = canvas.getContext('2d', { willReadFrequently: true });
-  if (!ctx) return [];
-
-  ctx.font = `${fontWeight} ${fontSize}px ${fontFamily}`;
-  ctx.textBaseline = 'top';
-  ctx.fillStyle = '#ffffff';
-
-  const align =
-    style.textAlign === 'center'
-      ? 'center'
-      : style.textAlign === 'right'
-        ? 'right'
-        : 'left';
-  ctx.textAlign = align;
-
-  const drawX =
-    align === 'center'
-      ? contentWidth / 2
-      : align === 'right'
-        ? contentWidth
-        : 0;
-  const leading = Math.max(0, (lineHeight - fontSize) / 2);
-  const lines = style.whiteSpace.includes('nowrap')
-    ? [text]
-    : wrapText(ctx, text, contentWidth);
-
-  lines.forEach((line, index) => {
-    const y = index * lineHeight + leading;
-    if (y > contentHeight) return;
-    ctx.fillText(line, drawX, y);
-  });
-
-  let pixels: Uint8ClampedArray;
-  try {
-    pixels = ctx.getImageData(0, 0, canvas.width, canvas.height).data;
-  } catch {
-    return [];
-  }
-
-  const originX = rect.left + borderLeft + paddingLeft;
-  const originY = rect.top + borderTop + paddingTop;
-  const points: GlyphPoint[] = [];
-
-  for (let y = 0; y < canvas.height; y += 1) {
-    for (let x = 0; x < canvas.width; x += 1) {
-      if (pixels[(y * canvas.width + x) * 4 + 3] < 110) continue;
-      points.push({ x: originX + x + 0.5, y: originY + y + 0.5 });
-    }
-  }
-
-  return points;
-};
-
-const collectTextPoints = (
-  width: number,
-  height: number,
-  budget: number,
-): GlyphPoint[] => {
+/** Collect glyph + outline groups for every text element on the first screen. */
+const collectGroups = (width: number, height: number) => {
+  const fill: GlyphPoint[][] = [];
+  const outline: GlyphPoint[][] = [];
   const elements = Array.from(
     document.querySelectorAll<HTMLElement>(TEXT_SELECTOR),
   );
-  const groups: GlyphPoint[][] = [];
-  let total = 0;
 
   for (const element of elements) {
     const rect = element.getBoundingClientRect();
@@ -263,54 +132,46 @@ const collectTextPoints = (
       continue;
     }
 
-    const points = rasterizeText(element);
-    if (points.length === 0) continue;
+    const detail = rasterizeTextDetail(element);
+    if (detail.fill.length === 0) continue;
 
-    groups.push(points);
-    total += points.length;
+    fill.push(detail.fill);
+    outline.push(detail.outline);
   }
 
+  return { fill, outline };
+};
+
+/** Pick at most `budget` points, keeping every element represented. */
+const allocate = (groups: GlyphPoint[][], budget: number): GlyphPoint[] => {
+  const total = groups.reduce((sum, group) => sum + group.length, 0);
   if (total === 0) return [];
 
   const scale = total > budget ? budget / total : 1;
   const targets: GlyphPoint[] = [];
 
-  for (const points of groups) {
+  for (const group of groups) {
     const take = Math.min(
-      points.length,
-      Math.max(20, Math.round(points.length * scale)),
+      group.length,
+      Math.max(18, Math.round(group.length * scale)),
     );
-
-    if (take >= points.length) {
-      targets.push(...points);
+    if (take >= group.length) {
+      targets.push(...group);
       continue;
     }
-
-    for (let index = points.length - 1; index > 0; index -= 1) {
-      const swap = Math.floor(Math.random() * (index + 1));
-      [points[index], points[swap]] = [points[swap], points[index]];
-    }
-    targets.push(...points.slice(0, take));
+    shuffle(group);
+    targets.push(...group.slice(0, take));
   }
 
   if (targets.length > budget) {
-    for (let index = targets.length - 1; index > 0; index -= 1) {
-      const swap = Math.floor(Math.random() * (index + 1));
-      [targets[index], targets[swap]] = [targets[swap], targets[index]];
-    }
+    shuffle(targets);
     targets.length = budget;
   }
 
-  // Randomise arrival order so the text does not assemble left-to-right.
-  for (let index = targets.length - 1; index > 0; index -= 1) {
-    const swap = Math.floor(Math.random() * (index + 1));
-    [targets[index], targets[swap]] = [targets[swap], targets[index]];
-  }
-
-  return targets;
+  return shuffle(targets);
 };
 
-const playIntro = () => {
+const prepareIntro = (): IntroRun | null => {
   const overlay = document.createElement('div');
   overlay.className = 'page-intro';
 
@@ -321,11 +182,15 @@ const playIntro = () => {
   document.body.append(overlay);
   document.body.classList.add('is-intro');
 
-  const ctx = canvas.getContext('2d', { alpha: true });
-  if (!ctx) {
+  const cleanup = () => {
     overlay.remove();
     document.body.classList.remove('is-intro');
-    return;
+  };
+
+  const ctx = canvas.getContext('2d', { alpha: true });
+  if (!ctx) {
+    cleanup();
+    return null;
   }
 
   const width = window.innerWidth;
@@ -338,27 +203,37 @@ const playIntro = () => {
   canvas.style.height = `${height}px`;
   ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
 
-  const targets = collectTextPoints(width, height, narrow ? 3000 : 6500);
-  if (targets.length === 0) {
-    overlay.remove();
-    document.body.classList.remove('is-intro');
-    return;
+  const groups = collectGroups(width, height);
+  const budget = narrow ? 2200 : 4200;
+  const fillTargets = allocate(groups.fill, budget);
+
+  if (fillTargets.length === 0) {
+    cleanup();
+    return null;
   }
 
+  const outlineTargets = allocate(
+    groups.outline,
+    Math.max(600, Math.round(budget * 0.7)),
+  );
+  const outlineSource =
+    outlineTargets.length > 0 ? outlineTargets : fillTargets;
+
   const palette = readPalette();
-  const count = targets.length;
+  const count = fillTargets.length;
   const aspect = width / Math.max(1, height);
   const columns = Math.max(8, Math.round(Math.sqrt(count * aspect)));
   const rows = Math.ceil(count / columns);
   const cellWidth = width / columns;
   const cellHeight = height / rows;
 
-  const particles: IntroParticle[] = targets.map((target, index) => {
+  const particles: IntroParticle[] = fillTargets.map((fillPoint, index) => {
     const column = index % columns;
     const row = Math.floor(index / columns);
     const roll = Math.random();
     const color =
       roll < 0.58 ? palette.accent : roll < 0.94 ? palette.ink : palette.light;
+    const outlinePoint = outlineSource[index % outlineSource.length];
 
     return {
       sx:
@@ -367,24 +242,33 @@ const playIntro = () => {
       sy:
         (row + 0.5) * cellHeight +
         randomBetween(-cellHeight * 0.18, cellHeight * 0.18),
-      tx: target.x,
-      ty: target.y,
+      ox: outlinePoint.x + randomBetween(-0.9, 0.9),
+      oy: outlinePoint.y + randomBetween(-0.9, 0.9),
+      fx: fillPoint.x,
+      fy: fillPoint.y,
       size: randomBetween(narrow ? 1.05 : 1.15, narrow ? 2.1 : 2.4),
       alpha: randomBetween(0.45, 1),
-      delay: randomBetween(0, 0.35),
+      phase: Math.random() * Math.PI * 2,
+      delay: randomBetween(0, 0.3),
+      fillDelay: randomBetween(0, 0.2),
       color: `rgb(${color[0]}, ${color[1]}, ${color[2]})`,
-      glow: Math.random() < 0.07,
+      glow: Math.random() < 0.05,
+      trail: Math.random() < 0.38,
     };
   });
 
-  const matrixHold = narrow ? 600 : 750;
-  const flight = narrow ? 1150 : 1500;
-  const hold = narrow ? 260 : 320;
-  const fadeAt = matrixHold + flight + hold;
-  const start = performance.now();
+  const matrixHold = narrow ? 380 : 460;
+  const outlineFlight = narrow ? 620 : 780;
+  const outlineHold = narrow ? 240 : 320;
+  const fillAt = matrixHold + outlineFlight + outlineHold;
+  const fillFlight = narrow ? 560 : 700;
+  const fillHold = narrow ? 220 : 260;
+  const fadeAt = fillAt + fillFlight + fillHold;
 
-  let finished = false;
   let frame = 0;
+  let started = false;
+  let finished = false;
+  let startTime = 0;
 
   const finish = () => {
     if (finished) return;
@@ -392,6 +276,7 @@ const playIntro = () => {
     cancelAnimationFrame(frame);
     overlay.classList.add('is-leaving');
     document.body.classList.remove('is-intro');
+    window.dispatchEvent(new CustomEvent('page:intro-end'));
     window.setTimeout(() => overlay.remove(), 760);
   };
 
@@ -403,7 +288,7 @@ const playIntro = () => {
     tailX = 0,
     tailY = 0,
   ) => {
-    if (tailX !== 0 || tailY !== 0) {
+    if ((tailX !== 0 || tailY !== 0) && particle.trail) {
       ctx.globalAlpha = alpha * 0.55;
       ctx.strokeStyle = particle.color;
       ctx.lineWidth = particle.size * 0.8;
@@ -434,8 +319,34 @@ const playIntro = () => {
     );
   };
 
+  const drawFlight = (
+    fromX: number,
+    fromY: number,
+    toX: number,
+    toY: number,
+    particle: IntroParticle,
+    local: number,
+  ) => {
+    const eased = easeOutCubic(local);
+    const x = fromX + (toX - fromX) * eased;
+    const y = fromY + (toY - fromY) * eased;
+    const dx = toX - fromX;
+    const dy = toY - fromY;
+    const length = Math.hypot(dx, dy) || 1;
+    const tail = (1 - eased) * 10;
+
+    drawParticle(
+      x,
+      y,
+      particle,
+      particle.alpha * Math.min(1, 0.25 + local * 1.6),
+      (dx / length) * tail,
+      (dy / length) * tail,
+    );
+  };
+
   const tick = (now: number) => {
-    const elapsed = now - start;
+    const elapsed = now - startTime;
 
     if (elapsed >= fadeAt) {
       finish();
@@ -446,10 +357,9 @@ const playIntro = () => {
     ctx.globalCompositeOperation = 'lighter';
 
     for (const particle of particles) {
+      // 1. Full-screen dot matrix, breathing before the trace begins.
       if (elapsed < matrixHold) {
-        // Full-screen dot matrix, breathing before it collapses into text.
-        const pulse =
-          0.62 + 0.38 * Math.sin(now * 0.005 + particle.delay * 18);
+        const pulse = 0.62 + 0.38 * Math.sin(now * 0.005 + particle.phase);
         drawParticle(
           particle.sx,
           particle.sy,
@@ -459,29 +369,52 @@ const playIntro = () => {
         continue;
       }
 
-      const span = Math.max(0.3, (flight - particle.delay * 1000) / 1000);
-      const local = clamp(
-        (elapsed - matrixHold - particle.delay * 1000) / (span * 1000),
-        0,
-        1,
-      );
-      const eased = easeOutCubic(local);
-      const x = particle.sx + (particle.tx - particle.sx) * eased;
-      const y = particle.sy + (particle.ty - particle.sy) * eased;
+      // 2. Fly out to the glyph outlines, tracing the first screen.
+      const outlineStart = matrixHold + particle.delay * 1000;
+      if (elapsed < outlineStart + outlineFlight) {
+        const span = Math.max(0.2, outlineFlight - particle.delay * 1000);
+        const local = clamp((elapsed - outlineStart) / span, 0, 1);
+        drawFlight(
+          particle.sx,
+          particle.sy,
+          particle.ox,
+          particle.oy,
+          particle,
+          local,
+        );
+        continue;
+      }
 
-      const dx = particle.tx - particle.sx;
-      const dy = particle.ty - particle.sy;
-      const length = Math.hypot(dx, dy) || 1;
-      const tail = (1 - eased) * 12;
+      // 3. Hold the outline: a wireframe made of particles.
+      if (elapsed < fillAt) {
+        const wobble = Math.sin(now * 0.004 + particle.phase) * 0.9;
+        drawParticle(
+          particle.ox + wobble,
+          particle.oy,
+          particle,
+          particle.alpha * 0.92,
+        );
+        continue;
+      }
 
-      drawParticle(
-        x,
-        y,
-        particle,
-        particle.alpha * Math.min(1, 0.25 + local * 1.6),
-        (dx / length) * tail,
-        (dy / length) * tail,
-      );
+      // 4. Fill the glyphs from the outline.
+      const fillStart = fillAt + particle.fillDelay * 1000;
+      if (elapsed < fillStart + fillFlight) {
+        const span = Math.max(0.2, fillFlight - particle.fillDelay * 1000);
+        const local = clamp((elapsed - fillStart) / span, 0, 1);
+        drawFlight(
+          particle.ox,
+          particle.oy,
+          particle.fx,
+          particle.fy,
+          particle,
+          local,
+        );
+        continue;
+      }
+
+      // 5. Hold the filled text until the overlay fades into the page.
+      drawParticle(particle.fx, particle.fy, particle, particle.alpha);
     }
 
     ctx.globalAlpha = 1;
@@ -489,23 +422,53 @@ const playIntro = () => {
     frame = requestAnimationFrame(tick);
   };
 
-  frame = requestAnimationFrame(tick);
+  window.dispatchEvent(new CustomEvent('page:intro-start'));
+
+  return {
+    start: () => {
+      if (started || finished) return;
+      started = true;
+      startTime = performance.now();
+      frame = requestAnimationFrame(tick);
+    },
+  };
 };
 
 export function initPageIntro() {
   if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
 
-  let started = false;
+  let run: IntroRun | null = null;
+  let fallbackTimer = 0;
+  let pendingStart = false;
+
+  // The page is covered as soon as the boot starts leaving, so the real page
+  // is never visible between the boot and the particle trace. The heavy text
+  // rasterisation is deferred a frame so the boot wipe stays smooth.
+  window.addEventListener(
+    'boot:exit',
+    (event) => {
+      const detail = (event as CustomEvent<{ skipped?: boolean }>).detail;
+      if (detail?.skipped) return;
+
+      window.setTimeout(() => {
+        run = prepareIntro();
+        if (run) {
+          fallbackTimer = window.setTimeout(() => run?.start(), 2600);
+        }
+        if (pendingStart) run?.start();
+      }, 40);
+    },
+    { once: true },
+  );
 
   window.addEventListener(
     'boot:done',
     (event) => {
-      if (started) return;
+      window.clearTimeout(fallbackTimer);
       const detail = (event as CustomEvent<{ skipped?: boolean }>).detail;
       if (detail?.skipped) return;
-
-      started = true;
-      playIntro();
+      if (run) run.start();
+      else pendingStart = true;
     },
     { once: true },
   );

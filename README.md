@@ -2,15 +2,16 @@
 
 一个以《明日方舟：终末地》官网为视觉语言、以 [满久琦的关于页](https://www.yhdzz.cn/about) 为内容来源的个人主页。
 
-纯 **Vite + TypeScript + 原生 CSS**，没有 UI 框架、没有动画库。背景地形、轨道核心、扫描线与 HUD 均为程序化生成；内容图片按 **1px 网格重绘为彩色点阵**（每像素最多一个点），背景、地形、卡片网格也统一为点阵；技术栈文字使用普通文字而不是点阵，穿插在背景与能力区；品牌 Logo 与 Hero HUD 图标保持清晰的普通图片/矢量显示。链接、文案、图片与主题全部集中在根目录的 **`config.json`**。
+纯 **Vite + TypeScript + 原生 CSS**，没有 UI 框架、没有动画库。背景地形、轨道核心、扫描线与 HUD 均为程序化生成；内容图片按 **1px 网格重绘为彩色点阵**（每像素最多一个点），背景、地形、卡片网格也统一为点阵；技术栈文字使用普通文字而不是点阵，穿插在背景与能力区；品牌 Logo 与 Hero HUD 图标保持清晰的普通图片/矢量显示。页面跟随系统浅色 / 深色主题；整页按模块分屏，一次滚动切换一整节，换节时文字溶解成粒子再重组；一言是一块会跟随主题的终端，逐字输出并在文字后叠加粒子光晕。链接、文案、图片与主题全部集中在根目录的 **`config.json`**。
 
 ## 快速开始
 
 ```bash
 npm install
-npm run dev      # 本地开发，修改 config.json 自动刷新
-npm run build    # 类型检查 + 生产构建
-npm run preview  # 预览构建结果
+npm run dev        # 本地开发，修改 config.json 自动刷新
+npm run typecheck  # 只做 TypeScript 类型检查
+npm run build      # 类型检查 + 生产构建
+npm run preview    # 预览构建结果
 ```
 
 构建产物在 `dist/`，可直接部署到任意静态托管（Vercel / Netlify / Cloudflare Pages / GitHub Pages）。
@@ -20,8 +21,23 @@ npm run preview  # 预览构建结果
 根目录的 `config.json` 是页面内容的唯一数据源：
 
 ```
-config.json  →  src/config.ts（类型与导出）  →  src/render.ts（渲染 DOM）  →  src/main.ts（交互）
+config.json  →  src/config.ts（补全默认值与派生数据）  →  src/render.ts（渲染 DOM）  →  src/main.ts（交互）
 ```
+
+配置里**只写内容**。序号、日期计数、URL 标签这类可以算出来的值都由 `src/config.ts` 自动补全，不需要（也不应该）手写：
+
+| 自动生成 | 来源 |
+| --- | --- |
+| `nav[].index`、`nav[].href` | 导航顺序（`00`、`01`…）与 `id`（`#id`） |
+| 各章节编号 `01`–`04` | 对应 `nav` 项的顺序 |
+| `works` / `capabilities` / `contact` 的 `no` | 数组顺序（`01`、`02`…） |
+| `works[].urlLabel`、`contact.links[].value` | 去掉协议与结尾斜杠的 `href` |
+| `profile.stats[].value`（带 `since` 时） | 从 `since` 到今天的天数，每天自动更新 |
+| `profile.avatar.image` | 缺省时使用 `brand.logo` |
+| `meta.themeColor` | 缺省时使用 `theme.accent` |
+| 任意字符串里的 `{year}` | 当前年份（页脚版权、ID 卡编号等） |
+| 站外链接的 `target="_blank"` 与 `rel` | `http(s)://` 开头的链接自动新窗口打开 |
+| 启动页提示语与阶段文案、Hero 滚动提示、回到顶部文案 | 代码内置默认值，可在配置中覆盖 |
 
 `config.json` 在构建时被打包进 JS，因此修改后：
 
@@ -32,56 +48,52 @@ config.json  →  src/config.ts（类型与导出）  →  src/render.ts（渲�
 
 | 字段 | 内容 |
 | --- | --- |
-| `meta` | 页面标题、描述、语言、favicon、浏览器主题色 |
-| `theme` | UI 强调色 `accent` / `accentSoft`（写入 CSS 变量 `--acid` / `--acid-soft`） |
-| `brand` | 站点名、英文名、别名、Logo 图片、首页链接 |
+| `meta` | 页面标题、描述、语言（可选，默认 `zh-CN`）、favicon（可选） |
+| `theme` | UI 强调色 `accent`（写入 CSS 变量 `--acid`）；`--acid-soft` 默认由它自动调暗 |
+| `brand` | 站点名、英文名、别名、Logo 图片、首页链接（可选，默认 `#home`） |
 | `header` | 顶栏右侧 CTA（当前为 BLOG） |
 | `clock` | 时钟时区与后缀（默认 `Asia/Shanghai` / `CST`） |
-| `nav` | 顶部导航与右侧章节索引；`id` 必须对应页面 section 的 id |
+| `nav` | 顶部导航与右侧章节索引：只需 `id`、`label`、`labelEn`；`id` 必须对应页面 section 的 id |
 | `rail` | 右侧索引下方的两行状态文字 |
-| `boot` | 启动页文案与加载状态 |
-| `scene` | Canvas 背景开关、主线色 `accent`、扫描高光色 `glow` |
-| `swarm` | 全屏漂浮粒子层开关、密度、鼠标交互 |
-| `particles` | 内容图片点阵、Hero 文字重组、一言粒子文字，以及 Hero / 头像 / 作品的点阵参数 |
-| `hero` | 首屏标题、副标题、按钮、状态条、背景图、坐标标签 |
-| `profile` | 个人档案、一言引用、数据、头像图片、ID 卡字段 |
+| `boot` | 启动页标语；`hint` / `messages` 可选，有内置默认值 |
+| `scene` | Canvas 背景色 `accent` / `glow`；`enabled: false` 可关闭 |
+| `swarm` | 全屏漂浮粒子层密度与鼠标交互；`enabled: false` 可关闭 |
+| `particles` | 内容图片点阵、Hero 文字重组、一言粒子光晕，以及 Hero / 头像 / 作品的点阵参数 |
+| `assembly` | 分页不可用时的「粒子 → 文字」组装回退：`enabled`（默认 `true`）与 `max`（点数上限，默认 `3200`），整段可省略 |
+| `hero` | 首屏标题、副标题、按钮、状态条、背景图、坐标标签、滚动提示 |
+| `profile` | 个人档案、一言引用、数据、头像、ID 卡字段 |
 | `capabilities` | 能力列表、标签、进度值、描边文字 |
 | `works` | 作品卡片：标题、链接、封面图、标签、强调色 |
-| `contact` | 邮箱、寄语、联系卡片 |
-| `techStack` | 技术栈文字：背景点阵词 + 能力区可见 chips |
+| `contact` | 邮箱、寄语、联系卡片（`value` 可省略，自动取域名） |
+| `techStack` | 技术栈文字：背景点阵词 + 能力区可见 chips + Hero 换词词表 |
 | `ticker` | 页脚上方滚动文字 |
-| `footer` | 版权、ICP/公安备案入口、自定义链接、来源标注、回到顶部文案 |
+| `footer` | 版权、ICP/公安备案入口（可选）、自定义链接、来源标注、回到顶部文案 |
 
 ### 链接
 
 ```json
 {
   "header": {
-    "cta": { "label": "BLOG", "href": "https://www.yhdzz.cn/", "external": true }
+    "cta": { "label": "BLOG", "href": "https://www.yhdzz.cn/" }
   },
   "contact": {
     "email": "me@example.com",
     "links": [
-      {
-        "no": "01",
-        "label": "BLOG / 博客",
-        "value": "www.yhdzz.cn",
-        "href": "https://www.yhdzz.cn/",
-        "external": true
-      }
+      { "label": "BLOG / 博客", "href": "https://www.yhdzz.cn/" }
     ]
   }
 }
 ```
 
 - 站内跳转写 `#profile`、`#works` 等锚点；
-- 站外链接写 `https://…`，`external: true` 会加上 `target="_blank"` 与 `rel="noreferrer"`；
+- 站外链接写 `https://…` 即可，渲染时会自动加上 `target="_blank"` 与 `rel="noreferrer"`；
+- 需要强制新窗口 / 同窗口时，再显式写 `external: true` / `false`；
 - 邮箱会自动生成 `mailto:`；
 - 渲染层会过滤 `javascript:` 等不安全的协议。
 
 ### 图片
 
-所有图片放在 `public/images/`，在配置中用绝对路径引用：
+图片建议放在 `public/images/`，在配置中用绝对路径引用（也支持远程 URL，但跨域图片需要目标服务器允许 CORS 才能采样为点阵）：
 
 ```json
 {
@@ -100,9 +112,7 @@ config.json  →  src/config.ts（类型与导出）  →  src/render.ts（渲�
       {
         "title": "我的项目",
         "href": "https://example.com",
-        "urlLabel": "example.com",
         "image": "/images/works/example.jpg",
-        "imageAlt": "项目封面",
         "tags": ["PROJECT", "WEB"],
         "accent": "#ff3ea5"
       }
@@ -111,11 +121,11 @@ config.json  →  src/config.ts（类型与导出）  →  src/render.ts（渲�
 }
 ```
 
-- 作品封面通过 `object-fit: cover` 填充，建议使用 **3:4** 的图片（如 800×1000）；也支持 SVG、PNG、WebP、JPG。
-- `profile.avatar.image` 会覆盖 ID 卡中的字母组合；图片加载失败时自动回退到 `avatar.fallback`。
+- 作品封面通过 `object-fit: cover` 填充，建议使用 **3:4** 的图片（如 800×1000）；也支持 SVG、PNG、WebP、JPG。`works[].urlLabel` 与 `imageAlt` 可省略，默认取域名与标题。
+- `profile.avatar.image` 会覆盖 ID 卡中的字母组合；省略时自动使用 `brand.logo`，图片加载失败时回退到 `avatar.fallback`。
 - `hero.image` 作为首屏右侧的低透明度叠加层，不需要时设为 `""`。
 - `brand.logo` 为空时会保留内置的矢量菱形 Logo。
-- 当前附带的图片均为抽象占位 SVG，直接替换同名文件即可保持配置不变。
+- `public/images/` 下附带的是抽象占位 SVG，直接替换同名文件即可保持配置不变；`brand.logo` 与 `profile.avatar` 默认引用远程图片，可换成本地路径。
 
 ### 富文本
 
@@ -129,7 +139,7 @@ config.json  →  src/config.ts（类型与导出）  →  src/render.ts（渲�
 
 ### 一言 Quote
 
-引用卡片已接入 [Hitokoto 一言](https://hitokoto.cn/)：
+引用终端已接入 [Hitokoto 一言](https://hitokoto.cn/)：
 
 ```json
 "quote": {
@@ -141,12 +151,23 @@ config.json  →  src/config.ts（类型与导出）  →  src/render.ts（渲�
 }
 ```
 
-- `mode: "hitokoto"`：页面加载时请求一言 API，成功后替换引用、出处与作者；失败时保留 `html/source/author` 作为回退。
-- 引用卡右上角显示 `↻ 换一句`，点击可重新请求。
-- 引用正文会渲染为**纯白色粒子文字**（`src/quoteParticles.ts`）：按 blockquote 实际字体与换行栅格化字形，粒子持续轻微游走，但不响应鼠标；换一句时旧粒子飞向新字形。真实文本保留在 DOM 中，用于布局、选中与读屏。
-- 粒子数量与开关由 `particles.quote` 控制；`prefers-reduced-motion` 下不启用，直接显示普通文本。
+- 引用以**终端窗口**呈现：标题栏、`manjiuqi@ink:~$ hitokoto --random` 命令回显、`ONLINE / SYNCING / OFFLINE` 状态、底部可输入的命令行，右上角 `↻ rerun` 可重新请求。
+- 命令行支持基础命令：`help` / `?` 列出命令，`hitokoto` / `refresh` / `rerun` / `quote` 换一句，`clear` / `cls` 清屏并回到当前句子，`whoami`、`about`、`date`、`echo <text>` 输出相应信息；未知命令提示输入 `help`。
+- 输入区支持 `↑` / `↓` 历史、`Tab` 补全、`Esc` 关闭输出并失焦、`Ctrl/Cmd + L` 清屏；命令输入是带标签的真实 `input`，输出区为 `role="status"` 的 `aria-live` 区域，移动端聚焦不会触发页面缩放。
+- 正文使用**打字机逐字输出**：先按最终文本预留高度避免跳动，再以约 10–28ms/字的节奏显示；输出完成后出处 / 作者淡入。
+- 文字背后叠加**粒子光晕**（`src/quoteParticles.ts`）：按终端的等宽字体与换行栅格化字形，粒子绘制在文字下层并做轻微模糊与放大，颜色随主题切换；换一句时旧粒子淡出、新字形重新生成。
+- 打字期间光晕会暂停，避免每个字符都重建；`particles.quote.max` 控制点数上限。
+- `prefers-reduced-motion` 下关闭打字动画与粒子光晕，直接显示完整文本。
+- `mode: "hitokoto"`：页面加载时请求一言 API，成功后替换引用、出处与作者；失败时保留 `html/source/author` 作为回退，并把终端状态显示为 `OFFLINE`。
 - 引用下方的统计条统一为「数值 + 单位 + 标签」结构，四项样式一致；进入视口时数字从 0 计数到目标值。
-- `profile.stats` 中带 `since` 的项按日期实时计算天数（当前建站日 `2017-12-22`，每天自动 +1，并每分钟校准一次）；其余统计直接读取配置值。`prefers-reduced-motion` 下不播放计数动画。
+- `profile.stats` 中带 `since` 的项省略 `value`：天数由 `src/config.ts` 在加载时计算，并在页面打开期间每分钟校准一次（跨零点自动 +1）；其余统计直接读取 `value`。`prefers-reduced-motion` 下不播放计数动画。
+
+```json
+"stats": [
+  { "value": "92", "suffix": "篇", "label": "文章 / ARTICLES" },
+  { "since": "2017-12-22", "suffix": "天", "label": "建站 / DAYS" }
+]
+```
 - 设为 `mode: "static"` 或移除 `endpoint` 即使用静态回退内容。
 - Hitokoto API 支持 CORS；这是页面唯一按需发起的外部请求（除配置中的远程图片外）。
 
@@ -155,13 +176,13 @@ config.json  →  src/config.ts（类型与导出）  →  src/render.ts（渲�
 ```json
 {
   "nav": [
-    { "id": "home", "index": "00", "label": "首页", "labelEn": "INDEX", "href": "#home" },
-    { "id": "profile", "index": "01", "label": "档案", "labelEn": "PROFILE", "href": "#profile" }
+    { "id": "home", "label": "首页", "labelEn": "INDEX" },
+    { "id": "profile", "label": "关于", "labelEn": "ABOUT" }
   ]
 }
 ```
 
-`id` 需要与 `index.html` 中 `<section id="...">` 对应，章节高亮和右侧索引依赖这个值。新增导航项时，同时新增对应 section。
+`id` 需要与 `index.html` 中 `<section id="...">` 对应，章节高亮和右侧索引依赖这个值。导航序号（`00`、`01`…）与 `#id` 链接会自动生成，各章节标题右侧的编号同样取自这里。新增导航项时，同时新增对应 section。
 
 点击任意指向 section 的站内锚点（顶部导航、右侧索引、Hero 按钮、页脚回到顶部）时，会先显示约 1 秒的 HUD 预加载面板（目标编号、英文名、进度条与同步状态），再瞬时滚动到目标小节；自由滚动不会打断浏览节奏。`prefers-reduced-motion` 下直接跳转。
 
@@ -173,41 +194,38 @@ config.json  →  src/config.ts（类型与导出）  →  src/render.ts（渲�
 
 ### 页脚备案与自定义链接
 
-`footer` 中新增三个填写入口，按顺序渲染在页脚底部，用 `·` 分隔：
+`footer` 里有三个**可选**入口，按顺序渲染在页脚底部，用 `·` 分隔：
 
 ```json
 "footer": {
-  "icp": {
-    "label": "ICP备案号",
-    "href": "https://beian.miit.gov.cn/",
-    "external": true
-  },
-  "police": {
-    "label": "公安备案号",
-    "href": "https://beian.mps.gov.cn/",
-    "external": true
-  },
-  "customLink": {
-    "label": "小满的墨水瓶",
-    "href": "https://www.yhdzz.cn/",
-    "external": true
-  }
+  "icp": { "label": "蒙ICP备2026xxxx号-1", "href": "https://beian.miit.gov.cn/" },
+  "police": { "label": "蒙公网安备 1501xxxxxxxxxxxx号", "href": "https://beian.mps.gov.cn/" },
+  "customLink": { "label": "小满的墨水瓶", "href": "https://www.yhdzz.cn/" }
 }
 ```
 
-- 把 `label` 换成实际备案号（如 `蒙ICP备2026xxxx号-1`、`蒙公网安备 1501xxxxxxxxxxxx号`）；`href` 默认为官方查询入口，也可改为备案详情页；
-- 任意一项 `label` 或 `href` 为空时自动隐藏；三项都为空时整行不显示；
+- 默认配置只保留 `customLink`；需要备案信息时再补上 `icp` / `police`，把 `label` 换成实际备案号，`href` 可改为备案详情页；
+- 任意一项 `label` 或 `href` 缺失时自动隐藏；三项都缺失时整行不显示；
 - `customLink` 是备案信息旁边的自定义链接，可改成任意站内或站外地址。
 
 ### 主题色
 
-主题色分为三处，建议一起调整：
+主题色只需要改一处：
 
-- `theme.accent` / `theme.accentSoft`：CSS 强调色（按钮、编号、标题强调等）；
-- `scene.accent` / `scene.glow`：Canvas 地形与线框体的颜色；
-- `meta.themeColor`：浏览器地址栏 / PWA 的主题色。
+- `theme.accent`：写入 CSS 变量 `--acid`，按钮、编号、标题强调、进度条、启动页进度全部跟随；`--acid-soft`（渐变起点、滚动条悬停）默认由它自动调暗，也可以显式提供 `theme.accentSoft`；
+- `meta.themeColor`（浏览器地址栏 / PWA 主题色）缺省时自动取 `theme.accent`；
+- `scene.accent` / `scene.glow` 控制 Canvas 地形、线框体与粒子源，属于独立的装饰色。
 
-> 当前配置里 `theme.accent` 与 `meta.themeColor` 是蓝色 `#0066FF`，但 `scene.accent` 仍是荧光黄 `#e6ff2e`。因此页面是蓝色 UI + 黄色地形/粒子源的双层配色。如果希望全蓝，需要同步修改 `scene.accent`、`scene.glow`，并重新着色 `public/images/*.svg`。
+> 当前配置是蓝色 UI（`#0066FF`）+ 荧光黄地形/粒子源（`#e6ff2e`）的双层配色。如果希望全蓝，同步修改 `scene.accent`、`scene.glow`，并重新着色 `public/images/*.svg`。
+### 系统主题（浅色 / 深色）
+
+页面通过 CSS 的 `prefers-color-scheme` 跟随系统外观：深色是默认视觉，浅色是同一套 HUD 语言的纸面变体。
+
+- 颜色全部来自 CSS 变量（`--bg` / `--surface` / `--ink` / `--muted` / `--line` 等），浅色模式在样式表末尾统一覆盖；
+- Canvas 效果读取 `--scene-ink`（地形 / 漂浮粒子）与 `--mix`（强调色调配方向），一言光晕读取 `--quote-particle`；系统切换时通过 `matchMedia('(prefers-color-scheme: light)')` 实时更新；
+- 启动页、页面入场遮罩、小节预加载、移动端菜单、卡片与 ID 面板都有对应的浅色样式；
+- 点阵图片在浅色下改用 `multiply` 混合模式，避免加色混合在亮背景上消失；
+- 阴影、描边、渐变与混合模式按主题分别定义，切换系统主题无需刷新页面。
 
 ### 点阵与图片
 
@@ -221,21 +239,12 @@ config.json  →  src/config.ts（类型与导出）  →  src/render.ts（渲�
 ```json
 {
   "particles": {
-    "enabled": true,
-    "density": 1,
-    "dotMatrix": true,
     "dotSpacing": 6,
     "dotColor": "source",
-    "morph": {
-      "enabled": true,
-      "interval": 5.5,
-      "scatter": 1.6,
-      "gather": 1.9,
-      "hold": 2
-    },
-    "quote": { "enabled": true, "max": 2600 },
-    "hero": { "max": 12000, "dotSpacing": 2, "size": 1.2, "interactive": false },
-    "avatar": { "max": 8000, "size": 1.3 },
+    "morph": { "interval": 5.5, "scatter": 1.6, "gather": 1.9, "hold": 2 },
+    "quote": { "max": 2600 },
+    "hero": { "max": 12000, "dotSpacing": 2, "blend": "lighter" },
+    "avatar": { "max": 12000, "size": 1.3 },
     "works": { "max": 6000, "size": 1.6 }
   }
 }
@@ -244,10 +253,10 @@ config.json  →  src/config.ts（类型与导出）  →  src/render.ts（渲�
 - `dotSpacing`：点阵网格间距（px），越小越密；Hero 可在 `particles.hero.dotSpacing` 单独覆盖（当前 `2`，约 12000 点）。
 - `dotColor: "source"`：点使用图片原始颜色；也可填 `#ffffff` 之类的固定颜色。
 - `max`：单张图片的安全上限；实际数量由图像特征与内容占用像素决定。
-- `size`：点尺寸倍数；移动端与低性能设备会自动降低活跃点数。
-- `interactive` / `scatter`：悬浮散开/回弹。
+- `size` / `interactive` / `scatter`：点尺寸倍数、鼠标响应与散开力度，默认 `1.2` / `true` / `1.2`。
+- `enabled`（总开关，默认 `true`）、`density`（密度倍率，默认 `1`）、`dotMatrix`（默认 `true`）省略即使用默认值。
 
-桌面高档实测：Hero 约 12000 点（受 `hero.max` 限制）、头像约 2900 点、作品封面约 1800–3500 点。
+桌面高档实测：Hero 约 12000 点（受 `hero.max` 限制）、头像约 4000–6000 点、作品封面约 1800–3500 点。
 
 #### Hero 点阵文字
 
@@ -260,15 +269,29 @@ Hero 右侧的点阵每隔一段时间会**先打散到整个 Hero 视口，再�
 - 字形区域按分辨率与宽高比自适应：宽屏约 `48% × 46%`、中心 `72% / 46%`，窄屏自动改为更大比例并进一步左移；`hero-media` 蒙版中心同步左移到 75%，保证放大后的字完整可见；
 - 词长超过区域宽度时自动缩小字号；**默认点阵与换词粒子都跟随实时主题色**（`--acid` 为主，混入少量墨白与高光），不再使用 Hero 图片的原始青黄色；
 - 默认点阵按像素亮度在主题色的深浅梯度间取色，保留原有明暗层次；头像与作品封面仍使用各自图片的颜色；
-- **鼠标响应**：`particles.hero.interactive: true`，指针进入字形区域会立即请求下一次换词（仍走打散 → 拼合流程）；停留在区域内时粒子会小幅避开光标，力度与半径经过收敛，尽量不破坏字形可读性；
+- **鼠标响应**：`particles.hero.interactive` 默认开启，指针进入字形区域会立即请求下一次换词（仍走打散 → 拼合流程）；停留在区域内时粒子会小幅避开光标，力度与半径经过收敛，尽量不破坏字形可读性；
 - 只作用于 Hero；`prefers-reduced-motion` 下不启用变形，保持静态点阵。
+
+#### 整屏分页与粒子转场
+
+脚本启用后 `<main>` 会变成一个整屏分页容器：首页 / 关于 / 技能 / 项目 / 联系 / 页脚各占一屏，一次滚轮、触摸上滑、方向键或导航点击只切换一个模块。
+
+- 切换时当前模块的文字先溶解成粒子，`main` 整体滑动到下一模块，粒子在新模块的文字位置重新汇聚，最后淡入真实文字；
+- 模块的边框、卡片与插图随模块一起滑入滑出，只有文字参与粒子的溶解与重组；
+- 模块内容高于一屏时（移动端或很矮的窗口），先在模块内部滚动，到达顶部 / 底部边界后才会切换模块；
+- 支持 `Home` / `End` / `↑` / `↓` / `PageUp` / `PageDown` / 空格，以及触屏上下滑；导航、右侧索引、Hero 按钮与返回顶部都走同一套分页；
+- 非当前模块会设置 `inert`，不进入 Tab 焦点与读屏顺序；地址栏同步为 `#home`、`#profile` … `#footer`，可直接深链到任意模块；
+- `prefers-reduced-motion` 下取消滑动过渡与粒子转场，模块瞬间切换。
+
+粒子转场使用 [pager.ts](src/pager.ts) 的预计算缓存：每个模块的文字在浏览器空闲时栅格化为点数有限的 glyph 目标，切换时只做位移与绘制，不在主线程重新采样。`assembly` 配置只在分页不可用时作为回退。
 
 #### 移动端适配
 
 - 入场文字粒子组装：`< 720px` 时粒子预算从 6500 降至 3000，矩阵停留与飞行时长同步缩短；
 - Hero 换词：触摸设备无法 hover，**点击字形区域**即可触发下一次打散换词；移动端降低 `hero-media` 透明度，避免粒子干扰文案阅读；
 - 作品轮播：保留原生触摸横向滑动；`(pointer: coarse)` 下滚动条触控高度增至 20px，把手常显；
-- 一言粒子文字：移动端粒子上限降为 1600，减少开销；
+- 一言粒子光晕：移动端粒子上限降为 1600，减少开销；
+- 小节粒子组装：移动端复用 `assembly.max`，并在 `prefers-reduced-motion` 下关闭；
 - 浮动 `BACK TO TOP`：触摸设备最小触控高度 40px；
 - 启动页、小节预加载、统计计数等布局本身已提供移动端断点。
 
@@ -287,7 +310,6 @@ Hero 右侧的点阵每隔一段时间会**先打散到整个 Hero 视口，再�
 ```json
 {
   "swarm": {
-    "enabled": true,
     "density": 1,
     "interactive": true
   }
@@ -302,14 +324,14 @@ Hero 右侧的点阵每隔一段时间会**先打散到整个 Hero 视口，再�
 
 ```json
 "techStack": [
-  "AI", "LLM", "Java", "Python", "Go", "TypeScript", "JavaScript",
+  "AI", "LLM", "Java", "Python", "Golang", "TypeScript", "JavaScript",
   "React", "Next.js", "Vue", "Node.js", "Docker", "Kubernetes",
   "Linux", "Nginx", "Git", "Vite", "Photoshop", "Apifox", "OneDrive",
   "GitHub", "CSS"
 ]
 ```
 
-`techStack` 同时用于背景普通文字与能力区 chips；前两项 `AI / LLM` 高亮。
+`techStack` 同时用于背景普通文字、能力区 chips 与 Hero 换词词表；前两项 `AI / LLM` 高亮。请只放技术词：汉字会被浏览器回退字体渲染，破坏点阵效果。
 
 #### 自适应性能
 
@@ -376,7 +398,14 @@ Hero 右侧的点阵每隔一段时间会**先打散到整个 Hero 视口，再�
 - 结束时先让主题色幕布从左向右覆盖全屏，再淡出露出页面；
 - 30% 与 60% 处各停留 **500ms**，期间状态变为 `AUTHENTICATING // 身份校验` / `SYNCING ARCHIVE // 档案同步`，进度条渐变为浅主题色。
 
-启动页自然结束后还会播放一次**首屏文字粒子组装动画**（`src/intro.ts`）：首屏先呈现为全屏点阵矩阵，粒子随后飞向所有可见文字的像素位置（品牌、导航、Hero 标题/副标题、按钮、状态区、时钟、右侧索引等），组成完整的粒子文字；组装完成后短暂停留，再与真实 DOM 文字交叉淡入。采样会读取每个元素的字体、字号、行高、内边距与对齐方式，并对小字号元素保留最低粒子数。手动跳过启动页或 `prefers-reduced-motion` 时跳过此动画。
+启动页开始退场时就会用一个不透明的入场层盖住页面，所以**页面不会在粒子效果前提前露出**；随后播放一次**首屏文字粒子描边 / 组装动画**（`src/intro.ts`），并且每次滚动到新的小节时都会再次播放小节版组装（`src/assembly.ts`）。进场顺序：
+
+1. 启动页退场 → 全屏粒子点阵（页面仍不可见）；
+2. 粒子飞向首屏所有可见文字的轮廓像素，先**描边**（品牌、导航、Hero 标题/副标题、按钮、状态区、时钟、右侧索引等）；
+3. 描边短暂停留后，粒子从轮廓**填充**成完整的粒子文字；
+4. 停留片刻，粒子与真实 DOM 文字交叉淡入，页面正式显示。
+
+采样会读取每个元素的字体、字号、行高、内边距与对齐方式，并对小字号元素保留最低粒子数；描边只取字形边界像素。手动跳过启动页或 `prefers-reduced-motion` 时跳过整段动画。
 
 时间轴：
 
@@ -389,7 +418,7 @@ Hero 右侧的点阵每隔一段时间会**先打散到整个 Hero 视口，再�
 | 60% → 100% | 750ms |
 | 主题色幕布 + 淡出 | 约 1.5s |
 
-启动页文案由 `config.json` 的 `boot` 控制：`kicker`、`title`、`hint` 与 `messages`（后者用于阶段状态）。品牌名与右下角法务文字由 `brand` 自动生成。点击任意位置或按任意键可跳过；`prefers-reduced-motion` 下取消扫描/幕布动画，进度改为跳变，但仍保留 30% / 60% 的 500ms 停顿。
+启动页文案由 `config.json` 的 `boot` 控制：`kicker` 与 `title` 为必填，`hint`（跳过提示）与 `messages`（阶段状态，最多 4 条）可省略并使用内置默认值。品牌名与右下角法务文字由 `brand` 自动生成。点击任意位置或按任意键可跳过；`prefers-reduced-motion` 下取消扫描/幕布动画，进度改为跳变，但仍保留 30% / 60% 的 500ms 停顿。启动页淡出完成后才会开始首屏粒子组装，避免动画被幕布遮住。
 
 ### 当前内容状态
 
@@ -401,9 +430,10 @@ Hero 右侧的点阵每隔一段时间会**先打散到整个 Hero 视口，再�
 - 站点：Xiaoman's Ink，92 篇文章、3247 天建站、81392 字、128 条评论；
 - 工作室：云电科技工作室（2019 - 至今）；
 - 项目：小满的墨水瓶、一言GO、小满网盘、云电工作室；
-- 引用卡：Hitokoto 一言，支持点击换一句；
-- 技术栈：AI / LLM 与 Java、Python、Go、TypeScript、React、Next.js、Vue、Node.js、Docker、Kubernetes、Linux、Nginx 等；
+- 引用终端：Hitokoto 一言，打字机输出 + 粒子光晕，支持终端命令与 rerun；
+- 技术栈：AI / LLM 与 Java、Python、Golang、TypeScript、React、Next.js、Vue、Node.js、Docker、Kubernetes、Linux、Nginx 等；
 - 联系方式：im@manjiuqi.com、GitHub / 博客 / 网盘 / 工作室链接；
+- 页脚只保留“小满的墨水瓶”自定义链接，备案入口留空（需要时在 `footer.icp` / `footer.police` 补充）；
 - 内容图片为 1px 彩色点阵；技术栈文字为普通文字。
 
 UI 强调色为蓝色 `#0066FF`，`scene.accent` 仍保留荧光黄作为地形/粒子源的辅助色。
@@ -472,10 +502,16 @@ UI 强调色为蓝色 `#0066FF`，`scene.accent` 仍保留荧光黄作为地形/
 │       ├── hero.svg
 │       └── works/        # 四张作品封面 SVG
 ├── src/
-│   ├── config.ts         # 导入 config.json 并导出类型
+│   ├── config.ts         # 导入 config.json，补全默认值与派生数据并导出类型
+│   ├── util.ts           # 公共小工具（补零、日期天数）
 │   ├── render.ts         # 把配置渲染成完整 DOM
+│   ├── intro.ts          # 首屏文字粒子描边与组装（描边 → 填充 → 页面）
+│   ├── assembly.ts       # 分页不可用时的粒子组装回退
+│   ├── textRaster.ts     # 把文字栅格化成 glyph 像素（首屏与小节共用）
+│   ├── theme.ts          # 读取 Canvas 主题色并监听系统主题切换
 │   ├── particles.ts      # 1px 彩色点采样、自适应预算、点阵化、Hero 文字重组与 CORS 探测
-│   ├── quoteParticles.ts # 一言正文的粒子文字（栅格化、换句重组、鼠标排斥）
+│   ├── pager.ts          # 整屏分页、手势、粒子溶解转场与文字目标缓存
+│   ├── quoteParticles.ts # 一言终端的粒子光晕（栅格化、换字重组、主题适配）
 │   ├── main.ts           # 启动页、时钟、滚动、导航、轮播、光标
 │   ├── scene.ts          # Canvas 2D 程序化背景
 │   ├── swarm.ts          # 全屏漂浮粒子层（游走、拖尾、鼠标排斥）
@@ -487,15 +523,18 @@ UI 强调色为蓝色 `#0066FF`，`scene.accent` 仍保留荧光黄作为地形/
 
 ## 无障碍与性能
 
-- 语义化 `header / nav / main / section / footer`，带 skip link。
-- 所有交互均可用键盘操作；轮播按钮有 `aria-label` 与禁用态。
+- 语义化 `header / nav / main / section / footer`，带 skip link；整屏分页用 `inert` 隔离非当前模块。
+- 所有交互均可用键盘操作；分页支持方向键 / PageUp / PageDown / 空格 / Home / End，轮播按钮有 `aria-label` 与禁用态。
 - Canvas 动画在标签页隐藏时暂停；DPR 上限 1.25–1.75；移动端自动降低网格密度。
 - 图片元素保留在 DOM 中用于替代文本；粒子画布为 `aria-hidden`，不干扰读屏。
 - 粒子画布使用 IntersectionObserver 按视口启停，只有可见的图片参与动画。
 - 内容图片的点阵预算根据硬件档位和实时 FPS 动态调整；移动端自动降低 DPR 与活跃点数。
+- 分页转场的文字目标在浏览器空闲时预计算并缓存，切换时只做粒子位移；入场动画与分页转场期间暂停背景 / 图片粒子循环，减少主线程竞争。
 - 品牌 Logo 与 Hero Sigil 不参与粒子化，保持原始图像/矢量清晰度。
 - 3D 倾斜只在 `(pointer: fine)` 设备启用；移动端使用静态透视与旋转动画。
 - 字体本地加载并 `preload`；图片支持懒加载；远程图片与一言 API 只在配置引用时请求。
+- 顶部导航用 `aria-current="location"` 标记当前小节；自定义光标只在精细指针且未开启“减少动态效果”时替换系统光标。
+- 一言终端：状态点、命令回显与装饰性提示为 `aria-hidden`，命令输入是带标签的真实 `input`，输出区使用 `role="status"` 实时区域；引用正文与出处保留语义；`prefers-reduced-motion` 下打字动画与粒子光晕关闭，直接显示全文。
 - 支持 `prefers-reduced-motion`：停止背景与粒子动画、关闭光标与大部分过渡，粒子显示为静态帧。
 
 ## 说明

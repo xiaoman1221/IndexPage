@@ -1,10 +1,14 @@
 import { config } from './config';
+import { initSectionAssembly } from './assembly';
 import { initPageIntro } from './intro';
-import { setupParticleImages } from './particles';
-import { initQuoteParticles } from './quoteParticles';
-import { daysSince, renderSite } from './render';
+import { initPager } from './pager';
+import { setParticlesPaused, setupParticleImages } from './particles';
+import { initQuoteParticles, type QuoteParticleText } from './quoteParticles';
+import { renderSite } from './render';
 import { initBackground } from './scene';
 import { initSwarm } from './swarm';
+import { extractText } from './textRaster';
+import { daysSince, pad } from './util';
 
 const $ = <T extends Element>(selector: string, parent: ParentNode = document) =>
   parent.querySelector<T>(selector);
@@ -13,8 +17,6 @@ const $$ = <T extends Element>(selector: string, parent: ParentNode = document) 
   Array.from(parent.querySelectorAll<T>(selector));
 
 const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
-
-const pad = (value: number) => String(value).padStart(2, '0');
 
 /* --------------------------------------------------------------------------
    Boot sequence
@@ -25,7 +27,6 @@ function setupBoot() {
   const bar = $<HTMLElement>('#boot-bar');
   const percent = $<HTMLElement>('#boot-percent');
   const status = $<HTMLElement>('#boot-status');
-  const log = $<HTMLElement>('#boot-log');
 
   if (!boot || !bar || !percent || !status) return;
 
@@ -37,34 +38,9 @@ function setupBoot() {
     'ARCHIVE SYNC',
     'SIGNAL ACQUIRED',
   ];
-  const stages = [...config.boot.messages];
-
-  while (stages.length < 4) {
-    stages.push(fallback[stages.length]);
-  }
-
-  const lines: HTMLElement[] = [];
-
-  if (log) {
-    log.replaceChildren();
-    stages.slice(0, 4).forEach((label, index) => {
-      const line = document.createElement('span');
-      line.className = 'boot-log-line';
-
-      const idx = document.createElement('i');
-      idx.textContent = pad(index);
-
-      const text = document.createElement('b');
-      text.textContent = label;
-
-      const state = document.createElement('em');
-      state.textContent = 'WAIT';
-
-      line.append(idx, text, state);
-      log.append(line);
-      lines.push(line);
-    });
-  }
+  const stages = [0, 1, 2, 3].map(
+    (index) => config.boot.messages[index] ?? fallback[index],
+  );
 
   let progress = 0;
   let finished = false;
@@ -81,17 +57,6 @@ function setupBoot() {
 
   const setStatus = (text: string) => {
     status.textContent = text;
-  };
-
-  const setActive = (index: number) => {
-    lines.forEach((line, lineIndex) => {
-      line.classList.toggle('is-done', lineIndex < index);
-      line.classList.toggle('is-active', lineIndex === index);
-      const state = line.querySelector('em');
-      if (!state) return;
-      state.textContent =
-        lineIndex < index ? 'OK' : lineIndex === index ? 'SYNC' : 'WAIT';
-    });
   };
 
   const animate = (to: number, duration: number) =>
@@ -138,57 +103,66 @@ function setupBoot() {
     boot.classList.remove('is-holding');
   };
 
-  const finish = () => {
-    if (finished) return;
-    finished = true;
-    window.dispatchEvent(
-      new CustomEvent('boot:done', { detail: { skipped } }),
-    );
-    cancelAnimationFrame(frame);
-    window.clearTimeout(holdTimer);
-    boot.classList.remove('is-holding');
-    progress = 100;
-    paint();
-    setStatus(stages[3] ?? fallback[3]);
-    setActive(lines.length);
-    boot.classList.add('is-leaving');
-
-    const delay = reducedMotion.matches ? 0 : 360;
-    window.setTimeout(() => document.body.classList.add('is-ready'), delay);
-    window.setTimeout(() => boot.remove(), reducedMotion.matches ? 140 : 1550);
-  };
-
   const skip = () => {
     skipped = true;
     finish();
   };
 
+  const finish = () => {
+    if (finished) return;
+    finished = true;
+    cancelAnimationFrame(frame);
+    window.clearTimeout(holdTimer);
+    window.removeEventListener('keydown', skip);
+    boot.classList.remove('is-holding');
+    progress = 100;
+    paint();
+    setStatus(stages[3]);
+    boot.classList.add('is-leaving');
+
+    // Let the intro cover the page immediately, before the boot fades out.
+    window.dispatchEvent(new CustomEvent('boot:exit', { detail: { skipped } }));
+
+    const reduced = reducedMotion.matches;
+    // The CSS fade starts after a short wipe delay; the intro overlay is
+    // appended once the boot screen is already transparent, otherwise it
+    // would play its first second behind the boot screen.
+    window.setTimeout(
+      () => document.body.classList.add('is-ready'),
+      reduced ? 0 : 360,
+    );
+    window.setTimeout(
+      () =>
+        window.dispatchEvent(
+          new CustomEvent('boot:done', { detail: { skipped } }),
+        ),
+      reduced ? 0 : 1350,
+    );
+    window.setTimeout(() => boot.remove(), reduced ? 140 : 1550);
+  };
+
   boot.addEventListener('click', skip);
-  window.addEventListener('keydown', skip, { once: true });
+  window.addEventListener('keydown', skip);
 
   void (async () => {
     paint();
-    setStatus(stages[0] ?? fallback[0]);
-    setActive(0);
+    setStatus(stages[0]);
 
     await animate(30, 850);
     if (finished) return;
-    setActive(1);
     await hold(500, 'AUTHENTICATING // 身份校验');
     if (finished) return;
 
-    setStatus(stages[1] ?? fallback[1]);
+    setStatus(stages[1]);
     await animate(60, 650);
     if (finished) return;
-    setActive(2);
     await hold(500, 'SYNCING ARCHIVE // 档案同步');
     if (finished) return;
 
-    setStatus(stages[2] ?? fallback[2]);
+    setStatus(stages[2]);
     await animate(100, 750);
     if (finished) return;
-    setActive(lines.length);
-    setStatus(stages[3] ?? fallback[3]);
+    setStatus(stages[3]);
 
     if (document.readyState !== 'complete') {
       await new Promise<void>((resolve) => {
@@ -432,7 +406,6 @@ function setupSectionTransition() {
 
   if (!loader || !bar || !indexEl || !nameEl || !statusEl) return;
 
-  let busy = false;
   let frame = 0;
   let hideTimer = 0;
 
@@ -446,7 +419,6 @@ function setupSectionTransition() {
   };
 
   const run = (id: string, section: HTMLElement) => {
-    busy = true;
     window.clearTimeout(hideTimer);
     cancelAnimationFrame(frame);
 
@@ -487,7 +459,6 @@ function setupSectionTransition() {
       hideTimer = window.setTimeout(() => {
         loader.classList.remove('is-active', 'is-leaving');
         bar.style.width = '0';
-        busy = false;
       }, 280);
     };
 
@@ -521,8 +492,6 @@ function setupSectionTransition() {
     if (reducedMotion.matches) return;
 
     event.preventDefault();
-    if (busy) return;
-
     run(id, section);
   });
 }
@@ -540,7 +509,9 @@ function setupSectionSpy() {
 
   const activate = (id: string) => {
     for (const link of navLinks) {
-      link.classList.toggle('is-active', link.dataset.nav === id);
+      const active = link.dataset.nav === id;
+      link.classList.toggle('is-active', active);
+      link.setAttribute('aria-current', active ? 'location' : 'false');
     }
     for (const dot of railDots) {
       dot.classList.toggle('is-active', dot.dataset.rail === id);
@@ -740,6 +711,8 @@ function setupCarousel() {
     'wheel',
     (event) => {
       if (event.ctrlKey) return;
+      // In pager mode the wheel changes modules; drag / buttons scroll the track.
+      if (document.documentElement.classList.contains('pager')) return;
 
       const raw =
         Math.abs(event.deltaX) > Math.abs(event.deltaY)
@@ -834,6 +807,10 @@ function setupCursor() {
   if (!cursor) return;
   if (!window.matchMedia('(pointer: fine)').matches) return;
   if (reducedMotion.matches) return;
+
+  // The drawn reticle replaces the native arrow; keep the native cursor
+  // whenever the custom one is not active (touch / reduced motion).
+  document.body.classList.add('has-custom-cursor');
 
   let x = window.innerWidth / 2;
   let y = window.innerHeight / 2;
@@ -984,33 +961,349 @@ interface HitokotoResponse {
   from_who?: string | null;
 }
 
-function setupHitokoto() {
+interface TypingHandle {
+  cancel: () => void;
+}
+
+/** Reserve the final height, then reveal the text character by character. */
+const typeInto = (
+  element: HTMLElement,
+  text: string,
+  onDone: () => void,
+): TypingHandle => {
+  let timer = 0;
+  let cancelled = false;
+
+  element.style.minHeight = '';
+  element.textContent = text;
+  const height = element.getBoundingClientRect().height;
+  element.style.minHeight = `${Math.ceil(height)}px`;
+  element.textContent = '';
+
+  if (reducedMotion.matches || text.length === 0) {
+    element.textContent = text;
+    onDone();
+    return { cancel: () => {} };
+  }
+
+  const step = Math.max(10, Math.min(28, Math.round(1500 / text.length)));
+  let index = 0;
+
+  const tick = () => {
+    if (cancelled) return;
+    index += 1;
+    element.textContent = text.slice(0, index);
+    if (index < text.length) timer = window.setTimeout(tick, step);
+    else onDone();
+  };
+
+  timer = window.setTimeout(tick, 160);
+
+  return {
+    cancel: () => {
+      cancelled = true;
+      window.clearTimeout(timer);
+    },
+  };
+};
+
+function setupHitokoto(particles: QuoteParticleText | null) {
   const quote = config.profile.quote;
   const text = $<HTMLElement>('#quote-text');
   const source = $('#quote-source');
   const author = $('#quote-author');
   const refresh = $<HTMLButtonElement>('#quote-refresh');
+  const state = $('#quote-state');
+  const meta = $('#quote-meta');
+  const body = $<HTMLElement>('#quote-body');
+  const output = $<HTMLElement>('#quote-output');
+  const promptLine = document.querySelector<HTMLElement>('.qt-prompt-line');
+  const input = $<HTMLInputElement>('#quote-input');
+  const typed = $('#quote-typed');
+  const commandEcho = document.querySelector<HTMLElement>('.qt-cmd');
 
   if (!text || !source || !author) return;
-  if (quote.mode !== 'hitokoto' || !quote.endpoint) return;
+
+  const initialText = extractText(text);
+  const history: string[] = [];
+  const COMMANDS = [
+    'help',
+    'hitokoto',
+    'refresh',
+    'clear',
+    'whoami',
+    'about',
+    'date',
+    'echo',
+  ];
+
+  let typing: TypingHandle | null = null;
+  let isTyping = false;
+  let currentText = initialText;
+  let controller: AbortController | null = null;
+  let load: (() => Promise<void>) | null = null;
+  let historyIndex = 0;
+
+  const setState = (label: string, tone?: 'busy' | 'error') => {
+    if (!state) return;
+    state.textContent = label;
+    state.classList.toggle('is-busy', tone === 'busy');
+    state.classList.toggle('is-error', tone === 'error');
+  };
+
+  const setEcho = (value: string) => {
+    if (commandEcho) commandEcho.textContent = value;
+  };
+
+  const setInput = (value: string) => {
+    if (input) input.value = value;
+    if (typed) typed.textContent = value;
+  };
+
+  const closeOutput = () => {
+    if (!output || !body) return;
+    output.hidden = true;
+    output.replaceChildren();
+    body.hidden = false;
+    if (!isTyping) particles?.setSuspended(false);
+  };
+
+  const openOutput = (fragment: DocumentFragment) => {
+    if (!output || !body) return;
+
+    // Finish a running typewriter so the quote is whole when help closes.
+    if (isTyping) {
+      typing?.cancel();
+      typing = null;
+      isTyping = false;
+      text.textContent = currentText;
+      meta?.classList.add('is-visible');
+    }
+
+    body.hidden = true;
+    output.hidden = false;
+    output.replaceChildren(fragment);
+    output.scrollTop = 0;
+    particles?.setSuspended(true);
+  };
+
+  const line = (value: string) => {
+    const element = document.createElement('p');
+    element.className = 'qt-line';
+    element.textContent = value;
+    return element;
+  };
+
+  const showLines = (lines: string[]) => {
+    const fragment = document.createDocumentFragment();
+    lines.forEach((value) => fragment.append(line(value)));
+    openOutput(fragment);
+  };
+
+  const showHelp = () => {
+    const entries: Array<[string, string]> = [
+      ['hitokoto / refresh', '换一句新的言'],
+      ['help / ?', '显示这份命令列表'],
+      ['clear / cls', '清空输出，回到当前句子'],
+      ['whoami', '显示站点身份'],
+      ['about', '关于这个站点'],
+      ['date', '当前本地时间'],
+      ['echo <text>', '原样输出一段文字'],
+    ];
+
+    const grid = document.createElement('div');
+    grid.className = 'qt-help';
+    for (const [name, description] of entries) {
+      const row = document.createElement('div');
+      row.className = 'qt-help-row';
+      const code = document.createElement('span');
+      code.className = 'qt-help-cmd';
+      code.textContent = name;
+      const desc = document.createElement('span');
+      desc.className = 'qt-help-desc';
+      desc.textContent = description;
+      row.append(code, desc);
+      grid.append(row);
+    }
+
+    const hint = document.createElement('p');
+    hint.className = 'qt-output-hint';
+    hint.textContent = 'enter 执行 · ↑↓ 历史 · tab 补全 · esc 关闭';
+
+    const fragment = document.createDocumentFragment();
+    fragment.append(grid, hint);
+    openOutput(fragment);
+  };
+
+  const run = (raw: string) => {
+    const value = raw.trim();
+    if (!value) return;
+
+    if (history[history.length - 1] !== value) history.push(value);
+    historyIndex = history.length;
+    setEcho(value);
+
+    const [name, ...rest] = value.split(/\s+/);
+    const argument = rest.join(' ');
+
+    switch (name.toLowerCase()) {
+      case 'help':
+      case '?':
+        showHelp();
+        break;
+      case 'hitokoto':
+      case 'refresh':
+      case 'rerun':
+      case 'quote': {
+        const fetchQuote = load;
+        if (!fetchQuote) {
+          showLines(['当前为本地句子模式，没有可用的在线一言接口。']);
+          break;
+        }
+        closeOutput();
+        void fetchQuote();
+        break;
+      }
+      case 'clear':
+      case 'cls':
+        closeOutput();
+        break;
+      case 'whoami':
+        showLines([
+          `${config.brand.name} / ${config.brand.nameEn}`,
+          '运维 · 学生 · 开发 · 博主',
+        ]);
+        break;
+      case 'about':
+        showLines([config.meta.description]);
+        break;
+      case 'date':
+        showLines([
+          new Intl.DateTimeFormat('zh-CN', {
+            dateStyle: 'full',
+            timeStyle: 'medium',
+          }).format(new Date()),
+        ]);
+        break;
+      case 'echo':
+        if (!argument) showLines(['用法：echo <text>']);
+        else showLines([argument]);
+        break;
+      default:
+        showLines([`command not found: ${name}`, "输入 'help' 查看可用命令。"]);
+        break;
+    }
+  };
+
+  const complete = () => {
+    if (!input) return;
+    const value = input.value;
+    if (!value || value.includes(' ')) return;
+    const match = COMMANDS.find((command) =>
+      command.startsWith(value.toLowerCase()),
+    );
+    if (match) setInput(`${match} `);
+  };
+
+  const submit = () => {
+    if (!input) return;
+    const value = input.value;
+    setInput('');
+    run(value);
+  };
+
+  input?.addEventListener('keydown', (event) => {
+    if (event.isComposing || event.keyCode === 229) return;
+
+    if (event.key === 'Enter') {
+      event.preventDefault();
+      submit();
+      return;
+    }
+    if (event.key === 'ArrowUp') {
+      event.preventDefault();
+      if (history.length === 0) return;
+      historyIndex = Math.max(0, historyIndex - 1);
+      setInput(history[historyIndex] ?? '');
+      return;
+    }
+    if (event.key === 'ArrowDown') {
+      event.preventDefault();
+      if (history.length === 0) return;
+      historyIndex = Math.min(history.length, historyIndex + 1);
+      setInput(historyIndex >= history.length ? '' : history[historyIndex]);
+      return;
+    }
+    if (event.key === 'Tab') {
+      event.preventDefault();
+      complete();
+      return;
+    }
+    if (event.key === 'Escape') {
+      event.preventDefault();
+      closeOutput();
+      input.blur();
+      return;
+    }
+    if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'l') {
+      event.preventDefault();
+      closeOutput();
+      setEcho('clear');
+    }
+  });
+
+  input?.addEventListener('input', () => {
+    if (typed) typed.textContent = input.value;
+  });
+
+
+  promptLine?.addEventListener('click', (event) => {
+    const target = event.target as Element;
+    if (target.closest('button, a, input')) return;
+    input?.focus();
+  });
+
+  const write = (sentence: string, from: string, fromWho: string) => {
+    typing?.cancel();
+    closeOutput();
+    currentText = sentence;
+    source.textContent = from;
+    author.textContent = fromWho;
+    particles?.setSuspended(true);
+    meta?.classList.remove('is-visible');
+    isTyping = true;
+    typing = typeInto(text, sentence, () => {
+      meta?.classList.add('is-visible');
+      isTyping = false;
+      typing = null;
+      particles?.setSuspended(false);
+    });
+  };
+
+  if (quote.mode !== 'hitokoto' || !quote.endpoint) {
+    if (initialText) write(initialText, quote.source, quote.author);
+    setState('STATIC');
+    return;
+  }
 
   if (refresh) refresh.hidden = false;
+  setState('ONLINE');
 
-  let controller: AbortController | null = null;
-
-  const load = async () => {
+  const fetchQuote = async () => {
     controller?.abort();
-    controller = new AbortController();
-    const timeout = window.setTimeout(() => controller?.abort(), 4500);
+    const request = new AbortController();
+    controller = request;
+    const timeout = window.setTimeout(() => request.abort(), 4500);
 
     if (refresh) {
       refresh.disabled = true;
       refresh.classList.add('is-loading');
     }
+    setState('SYNCING', 'busy');
 
     try {
       const response = await fetch(quote.endpoint as string, {
-        signal: controller.signal,
+        signal: request.signal,
         headers: { Accept: 'application/json' },
       });
 
@@ -1019,23 +1312,24 @@ function setupHitokoto() {
       const data = (await response.json()) as HitokotoResponse;
       const sentence = data.hitokoto?.trim();
       if (!sentence) throw new Error('Empty hitokoto');
-
-      text.textContent = sentence;
+      if (controller !== request) return;
 
       const from = data.from?.trim() ?? '';
       const fromWho = data.from_who?.trim() ?? '';
-      source.textContent = from ? `一言 · ${from}` : '一言';
-      author.textContent = fromWho ? `— ${fromWho}` : '— Hitokoto';
-
-      text.classList.remove('is-fresh');
-      void text.offsetWidth;
-      text.classList.add('is-fresh');
+      write(
+        sentence,
+        from ? `一言 · ${from}` : '一言',
+        fromWho ? `— ${fromWho}` : '— Hitokoto',
+      );
+      setState('ONLINE');
     } catch (error) {
-      if ((error as Error).name !== 'AbortError') {
-        console.warn('[hitokoto] keeping fallback:', error);
-      }
+      // A newer request replaced this one; it owns the terminal state now.
+      if (controller !== request) return;
+      console.warn('[hitokoto] keeping fallback:', error);
+      setState('OFFLINE', 'error');
     } finally {
       window.clearTimeout(timeout);
+      if (controller !== request) return;
       if (refresh) {
         refresh.disabled = false;
         refresh.classList.remove('is-loading');
@@ -1043,18 +1337,32 @@ function setupHitokoto() {
     }
   };
 
-  refresh?.addEventListener('click', () => void load());
-  void load();
+  load = fetchQuote;
+
+  refresh?.addEventListener('click', () => {
+    setEcho('hitokoto --random');
+    closeOutput();
+    void fetchQuote();
+  });
+
+  // Let the API answer first; if it is slow, type the bundled quote meanwhile.
+  const fallbackTimer = window.setTimeout(() => {
+    if (initialText) write(initialText, quote.source, quote.author);
+  }, 500);
+  void fetchQuote().finally(() => window.clearTimeout(fallbackTimer));
 }
 
 /* --------------------------------------------------------------------------
    Misc
    -------------------------------------------------------------------------- */
 
+let backgroundScene: ReturnType<typeof initBackground> = null;
+let swarmLayer: ReturnType<typeof initSwarm> = null;
+
 function setupMisc() {
   const canvas = $('#scene') as HTMLCanvasElement | null;
   if (canvas) {
-    initBackground(canvas, {
+    backgroundScene = initBackground(canvas, {
       enabled: config.scene.enabled,
       accent: config.scene.accent,
       glow: config.scene.glow,
@@ -1064,7 +1372,7 @@ function setupMisc() {
 
   const swarm = $('#swarm') as HTMLCanvasElement | null;
   if (swarm) {
-    initSwarm(swarm, {
+    swarmLayer = initSwarm(swarm, {
       ...config.swarm,
       accent: config.scene.accent,
       glow: config.scene.glow,
@@ -1072,36 +1380,48 @@ function setupMisc() {
   }
 }
 
+/** Freeze the ambient canvases while the entry animation owns the screen. */
+function setAmbientPaused(paused: boolean) {
+  backgroundScene?.setPaused(paused);
+  swarmLayer?.setPaused(paused);
+}
+
+window.addEventListener('page:intro-start', () => {
+  setParticlesPaused(true);
+  setAmbientPaused(true);
+});
+
+window.addEventListener('page:intro-end', () => {
+  setParticlesPaused(false);
+  setAmbientPaused(false);
+});
+
 renderSite(config);
 
-const morph = config.particles?.morph;
-setupParticleImages({
-  ...config.particles,
-  morph: {
-    ...morph,
-    words: morph?.words?.length ? morph.words : config.techStack,
-    interval: morph?.interval ?? 4,
-    hold: morph?.hold ?? 1.5,
-  },
-});
+const pager = initPager();
+
+// `config` already resolved the morph word list (particles.morph.words, or the
+// top-level techStack) and every default, so the effects get it verbatim.
+setupParticleImages(config.particles);
 
 setupBoot();
 initPageIntro();
+if (!pager.active) initSectionAssembly(config.assembly);
 setupClock();
-setupHitokoto();
-initQuoteParticles({
-  enabled:
-    (config.particles?.enabled ?? true) &&
-    (config.particles?.quote?.enabled ?? true),
-  max: config.particles?.quote?.max,
+const quoteParticles = initQuoteParticles({
+  enabled: config.particles.enabled && config.particles.quote.enabled,
+  max: config.particles.quote.max,
 });
+setupHitokoto(quoteParticles);
 setupTelemetry();
-setupScroll();
-setupReveals();
 setupStats();
-setupSectionTransition();
-setupSectionSpy();
 setupMenu();
+if (!pager.active) {
+  setupScroll();
+  setupReveals();
+  setupSectionTransition();
+  setupSectionSpy();
+}
 setupCarousel();
 setupCursor();
 setup3DTilt();
