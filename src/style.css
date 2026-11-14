@@ -6641,3 +6641,14 @@ html.pager .qt-run {
     min-height: 34px;
   }
 }
+
+/* Configurable footer wordmark: hide when empty, wrap long custom text. */
+.footer-wordmark[hidden] {
+  display: none;
+}
+
+.footer-wordmark span {
+  max-width: 100%;
+  overflow-wrap: anywhere;
+  text-wrap: balance;
+}

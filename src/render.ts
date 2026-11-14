@@ -775,6 +775,15 @@ const renderTicker = (phrases: string[]) => {
 };
 
 const renderFooter = (config: SiteConfig) => {
+  setText('#footer-wordmark', config.footer.wordmark);
+  setText('#footer-wordmark-sub', config.footer.wordmarkSub);
+  const wordmark = $<HTMLElement>('#footer-wordmark-block');
+  if (wordmark) {
+    wordmark.hidden = !(
+      config.footer.wordmark.trim() || config.footer.wordmarkSub.trim()
+    );
+  }
+
   const copy = $('#footer-copy');
   if (copy) copy.textContent = config.footer.copyright;
 

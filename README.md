@@ -67,7 +67,7 @@ config.json  →  src/config.ts（补全默认值与派生数据）  →  src/re
 | `contact` | 邮箱、寄语、联系卡片、通信面板（状态 / 回复 / 本地时间）与来信须知（`value` 可省略，自动取域名） |
 | `techStack` | 技术栈文字：背景点阵词 + 能力区可见 chips + Hero 换词词表 |
 | `ticker` | 页脚上方滚动文字 |
-| `footer` | 版权、ICP/公安备案入口（可选）、自定义链接、来源标注、回到顶部文案 |
+| `footer` | 页脚大字与副标题、版权、ICP/公安备案入口（可选）、自定义链接、来源标注、回到顶部文案 |
 
 ### 链接
 
@@ -192,9 +192,20 @@ config.json  →  src/config.ts（补全默认值与派生数据）  →  src/re
 
 小节之间的留白也收紧了：`.section` 上下 padding 从 `clamp(92px, 13vh, 162px)` 调整为 `clamp(64px, 9vh, 112px)`，移动端为 `clamp(52px, 8vh, 84px)`，整体更紧凑。
 
-### 页脚备案与自定义链接
+### 页脚大字、备案与自定义链接
 
-`footer` 里有三个**可选**入口，按顺序渲染在页脚底部，用 `·` 分隔：
+页脚模块中央的描边大字和副标题由配置控制：
+
+```json
+"footer": {
+  "wordmark": "XIAOMAN'S INK",
+  "wordmarkSub": "AS ABOVE / SO BELOW"
+}
+```
+
+- `wordmark` 是中央大字，`wordmarkSub` 是下方小字，支持 `{year}` 占位；
+- 两项都留空时整块隐藏，只留一项时另一行不渲染；长文本会自动换行；
+- 页脚底部还有三个**可选**入口，按顺序渲染，用 `·` 分隔：
 
 ```json
 "footer": {

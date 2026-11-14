@@ -224,6 +224,8 @@ export interface RawFooterFilingConfig {
 }
 
 export interface RawFooterConfig {
+  wordmark?: string;
+  wordmarkSub?: string;
   copyright?: string;
   icp?: RawFooterFilingConfig;
   police?: RawFooterFilingConfig;
@@ -547,6 +549,8 @@ const resolveConfig = (raw: RawSiteConfig) => {
     techStack: raw.techStack ?? [],
     ticker: raw.ticker ?? [],
     footer: {
+      wordmark: raw.footer?.wordmark ?? '',
+      wordmarkSub: raw.footer?.wordmarkSub ?? '',
       copyright: raw.footer?.copyright ?? `© {year} ${brand.name}`,
       icp: raw.footer?.icp,
       police: raw.footer?.police,
