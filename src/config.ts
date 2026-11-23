@@ -139,7 +139,6 @@ export interface RawWorkItemConfig {
   image?: string;
   imageAlt?: string;
   tags?: string[];
-  accent?: string;
 }
 
 export interface RawWorksConfig {
@@ -515,7 +514,6 @@ const resolveConfig = (raw: RawSiteConfig) => {
         image: item.image,
         imageAlt: item.imageAlt ?? item.title,
         tags: item.tags ?? [],
-        accent: item.accent,
       })),
     },
     contact: {

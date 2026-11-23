@@ -5,6 +5,8 @@
  * coordinates.
  */
 
+import { wrapText } from './util';
+
 export interface GlyphPoint {
   x: number;
   y: number;
@@ -42,32 +44,6 @@ export const extractText = (root: HTMLElement): string => {
     .replace(/[ \t]+/g, ' ')
     .replace(/ *\n */g, '\n')
     .trim();
-};
-
-const wrapText = (
-  ctx: CanvasRenderingContext2D,
-  text: string,
-  maxWidth: number,
-): string[] => {
-  const lines: string[] = [];
-
-  for (const paragraph of text.split('\n')) {
-    if (!paragraph) continue;
-
-    let line = '';
-    for (const char of Array.from(paragraph)) {
-      const next = line + char;
-      if (line && ctx.measureText(next).width > maxWidth) {
-        lines.push(line);
-        line = char.trimStart();
-      } else {
-        line = next;
-      }
-    }
-    if (line) lines.push(line);
-  }
-
-  return lines;
 };
 
 /**

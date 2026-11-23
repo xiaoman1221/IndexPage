@@ -9,8 +9,7 @@
 
 import { extractText } from './textRaster';
 import { readThemeColors, watchColorScheme } from './theme';
-
-const TAU = Math.PI * 2;
+import { clamp, randomBetween, TAU, wrapText } from './util';
 
 export interface QuoteParticleOptions {
   enabled?: boolean;
@@ -34,38 +33,6 @@ interface Mote {
   color: string;
   glow: boolean;
 }
-
-const clamp = (value: number, min: number, max: number) =>
-  Math.min(max, Math.max(min, value));
-
-const randomBetween = (min: number, max: number) =>
-  min + Math.random() * (max - min);
-
-const wrapText = (
-  ctx: CanvasRenderingContext2D,
-  text: string,
-  maxWidth: number,
-): string[] => {
-  const lines: string[] = [];
-
-  for (const paragraph of text.split('\n')) {
-    if (!paragraph) continue;
-
-    let line = '';
-    for (const char of Array.from(paragraph)) {
-      const next = line + char;
-      if (line && ctx.measureText(next).width > maxWidth) {
-        lines.push(line);
-        line = char.trimStart();
-      } else {
-        line = next;
-      }
-    }
-    if (line) lines.push(line);
-  }
-
-  return lines;
-};
 
 export class QuoteParticleText {
   private readonly source: HTMLElement;

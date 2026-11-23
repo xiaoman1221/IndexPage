@@ -30,7 +30,7 @@ function setupBoot() {
 
   if (!boot || !bar || !percent || !status) return;
 
-  boot.style.setProperty('--boot-accent', config.theme.accent || '#0066FF');
+  boot.style.setProperty('--boot-accent', config.theme.accent);
 
   const fallback = [
     'LINK HANDSHAKE',

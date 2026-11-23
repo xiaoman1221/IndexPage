@@ -9,8 +9,7 @@
  */
 
 import { readThemeColors, watchColorScheme, type Rgb } from './theme';
-
-const TAU = Math.PI * 2;
+import { clamp, hexToRgb, TAU } from './util';
 
 const FALLBACK_ACCENT: Rgb = [230, 255, 46];
 const FALLBACK_GLOW: Rgb = [255, 255, 150];
@@ -41,25 +40,6 @@ interface Mote {
   color: Rgb;
   streak: number;
 }
-
-const clamp = (value: number, min: number, max: number) =>
-  Math.min(max, Math.max(min, value));
-
-const hexToRgb = (hex: string | undefined, fallback: Rgb): Rgb => {
-  if (!hex) return fallback;
-
-  let value = hex.trim().replace(/^#/, '');
-  if (value.length === 3) {
-    value = value
-      .split('')
-      .map((char) => char + char)
-      .join('');
-  }
-  if (!/^[0-9a-f]{6}$/i.test(value)) return fallback;
-
-  const numeric = Number.parseInt(value, 16);
-  return [(numeric >> 16) & 255, (numeric >> 8) & 255, numeric & 255];
-};
 
 class ParticleSwarm {
   private readonly canvas: HTMLCanvasElement;

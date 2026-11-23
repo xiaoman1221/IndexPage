@@ -178,13 +178,28 @@ const renderMeta = (config: SiteConfig) => {
   const ogLocale = $<HTMLMetaElement>('meta[property="og:locale"]');
   if (ogLocale) ogLocale.content = config.meta.lang.replace('-', '_');
 
-  let themeColor = $<HTMLMetaElement>('meta[name="theme-color"]');
-  if (!themeColor) {
-    themeColor = create('meta');
-    themeColor.name = 'theme-color';
-    document.head.append(themeColor);
+  const themeColors = Array.from(
+    document.querySelectorAll<HTMLMetaElement>('meta[name="theme-color"]'),
+  );
+  const themed = themeColors.filter((meta) => meta.media);
+  if (themed.length) {
+    // index.html ships a static dark/light pair. The config accent belongs to
+    // the dark surface; the light value stays as authored so the browser gets
+    // a legible chrome color in both modes instead of one stale color.
+    const dark = themed.find((meta) => /dark/.test(meta.media));
+    if (dark) dark.content = config.meta.themeColor;
+    for (const meta of themeColors) {
+      if (!meta.media && meta !== dark) meta.remove();
+    }
+  } else {
+    let themeColor = $<HTMLMetaElement>('meta[name="theme-color"]');
+    if (!themeColor) {
+      themeColor = create('meta');
+      themeColor.name = 'theme-color';
+      document.head.append(themeColor);
+    }
+    themeColor.content = config.meta.themeColor;
   }
-  themeColor.content = config.meta.themeColor;
 
   const favicon = $<HTMLLinkElement>('link[rel="icon"]');
   if (favicon) favicon.href = safeHref(config.meta.favicon, '/favicon.svg');
@@ -609,7 +624,6 @@ const renderWorks = (config: SiteConfig) => {
   for (const item of works.items) {
     const external = isExternal(item.href);
     const card = create('article', 'work-card');
-    card.style.setProperty('--accent', safeColor(item.accent, '#e6ff2e'));
 
     const link = create('a', 'work-link-wrap');
     applyLink(link, item.href, external);

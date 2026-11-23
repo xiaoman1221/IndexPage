@@ -2,16 +2,18 @@
   "meta": {
     "lang": "zh-CN",
     "title": "满久琦 · 小满1221 | Xiaoman's Ink",
-    "description": "满久琦（小满1221）· 运维、学生、开发、博主。天上如是，地下亦然。"
+    "description": "满久琦（小满1221）· 运维、学生、开发、博主。天上如是，地下亦然。",
+    "favicon": "/favicon.svg",
+    "themeColor": "#e6ff2e"
   },
   "theme": {
-    "accent": "#00ff00"
+    "accent": "#e6ff2e"
   },
   "brand": {
     "name": "小满1221",
     "nameEn": "MAN JIUQI",
     "alias": "满久琦",
-    "logo": "https://static.yhdzz.cn/imgs/xiaoman1221/xiaoman1221-new.jpg"
+    "logo": "https://static.yhdzz.cn/imgs/xiaoman1221/xiaoman1221-new.jpg?x-oss-process=image/resize,w_256/format,webp/quality,80"
   },
   "header": {
     "cta": { "label": "BLOG", "href": "https://www.yhdzz.cn/" }
@@ -176,36 +178,32 @@
         "description": "运行 3247 天的个人博客，92 篇文章，记录运维、开发与生活。",
         "client": "你好，很高兴认识你 👋",
         "href": "https://www.yhdzz.cn/",
-        "image": "https://static.yhdzz.cn/imgs/indexpage/ink-index.png",
-        "tags": ["BLOG", "92 POSTS"],
-        "accent": "#0066FF"
+        "image": "https://static.yhdzz.cn/imgs/indexpage/ink-index.png?x-oss-process=image/resize,m_fill,w_1200,h_800/format,webp/quality,78",
+        "tags": ["BLOG", "92 POSTS"]
       },
       {
         "title": "一言GO",
         "description": "基于 Go 的一言 API 项目，随手记录灵感与句子。",
         "client": "Open Source / HitokotoGo",
         "href": "https://github.com/xiaoman1221/HitokotoGo",
-        "image": "https://static.yhdzz.cn/imgs/indexpage/hitokotogo-index.png",
-        "tags": ["GO", "API"],
-        "accent": "#ff3ea5"
+        "image": "https://static.yhdzz.cn/imgs/indexpage/hitokotogo-index.png?x-oss-process=image/resize,m_fill,w_1200,h_800/format,webp/quality,78",
+        "tags": ["GO", "API"]
       },
       {
         "title": "小满网盘",
         "description": "个人网盘与文件分享空间。",
-        "client": "FreeImage / 随时存取",
+        "client": "Cloudreve / 随时存取",
         "href": "https://pan.yhdzz.cn/",
-        "image": "https://static.yhdzz.cn/imgs/indexpage/cloudreve-index.png",
-        "tags": ["CLOUD", "STORAGE"],
-        "accent": "#49ffb8"
+        "image": "https://static.yhdzz.cn/imgs/indexpage/cloudreve-index.png?x-oss-process=image/resize,m_fill,w_1200,h_800/format,webp/quality,78",
+        "tags": ["CLOUD", "STORAGE"]
       },
       {
         "title": "小满图床",
-        "description": "个人网盘与文件分享空间。",
-        "client": "FreeImage / 随时存取",
+        "description": "免费图片托管与外链图床，为博客和站点提供稳定图链。",
+        "client": "FreeImage / 图床服务",
         "href": "https://www.freeima.com/",
-        "image": "https://static.yhdzz.cn/imgs/indexpage/freeima-index.png",
-        "tags": ["FREE", "IMAGE"],
-        "accent": "#49ffb8"
+        "image": "https://static.yhdzz.cn/imgs/indexpage/freeima-index.png?x-oss-process=image/resize,m_fill,w_1200,h_800/format,webp/quality,78",
+        "tags": ["FREE", "IMAGE"]
       },
       {
         "title": "云电工作室",
@@ -213,8 +211,7 @@
         "client": "Cloud Studio / 2019 - NOW",
         "href": "https://bbs.ce-studio.cn/",
         "image": "/images/works/share.svg",
-        "tags": ["STUDIO", "COMMUNITY"],
-        "accent": "#f2f0e6"
+        "tags": ["STUDIO", "COMMUNITY"]
       }
     ]
   },
@@ -241,7 +238,7 @@
     "links": [
       { "label": "BLOG / 博客", "href": "https://www.yhdzz.cn/" },
       { "label": "GITHUB / 代码", "href": "https://github.com/xiaoman1221" },
-      { "label": "CLOUD / 网盘", "href": "https://www.freeima.com/" },
+      { "label": "CLOUD / 网盘", "href": "https://pan.yhdzz.cn/" },
       { "label": "STUDIO / 工作室", "href": "https://bbs.ce-studio.cn/" }
     ]
   },

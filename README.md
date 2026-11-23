@@ -16,6 +16,48 @@ npm run preview    # 预览构建结果
 
 构建产物在 `dist/`，可直接部署到任意静态托管（Vercel / Netlify / Cloudflare Pages / GitHub Pages）。
 
+## 部署：缓存与图片体积
+
+仓库本身不含托管配置（没有 `_headers`、`netlify.toml` 或 `vercel.json`），所以下面两段需要在托管侧配置。
+
+**1. 带哈希的产物要长期缓存。** Vite 的资源文件名含内容哈希（`assets/index-DJWPtwtn.js`），内容变化时哈希必然变化，因此可以放心设成长寿命的 immutable：
+
+```
+# Cloudflare Pages: _headers
+/assets/*  Cache-Control: public, max-age=31536000, immutable
+
+# Netlify: netlify.toml
+[[headers]]
+  for = "/assets/*"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
+```
+
+`index.html` 本身不能设长缓存（它引用哈希文件名，必须每次取最新），保持 `max-age=0, must-revalidate` 即可。
+
+**2. 远程图片走 OSS 的图片处理参数。** 项目卡片与品牌 Logo 来自 `static.yhdzz.cn`（阿里云 OSS），原图是 1.5–4.1 MB 的 PNG，而卡片视觉框只有 `clamp(250px, 26vw, 352px)` 高、`object-fit: cover`，用不到那么大的图。OSS 支持在 URL 上追加处理参数，实测结果：
+
+| 用途 | 原图 | 加参数后 |
+| --- | --- | --- |
+| 项目卡片 | 4.1 MB PNG（3584×1778） | 42.9 KB WebP（`resize,m_fill,w_1200,h_800/format,webp/quality,78`） |
+| 品牌 Logo | 128 KB JPG | 10 KB WebP（`resize,w_256/format,webp/quality,80`） |
+
+`config.json` 里的 URL 已经带上了这些参数，格式是：
+
+```
+https://static.yhdzz.cn/imgs/indexpage/ink-index.png?x-oss-process=image/resize,m_fill,w_1200,h_800/format,webp/quality,78
+```
+
+换图时保留同样的参数后缀即可；`resize` 与 `format` 的先后顺序不影响结果。注意 OSS 目前只给这些图片设 `Cache-Control: max-age=14400`（4 小时），要更长的缓存需要在 OSS 侧改响应头，仓库里改不了。
+
+**3. RSS。** 博客站目前没有 `/feed.xml`（访问 `/rss` 返回 404）。若要加：生成一份静态 `feed.xml`（最新 20 条文章，含 `title`、`link`、`pubDate`、`description`），在 `<head>` 里加一行
+
+```html
+<link rel="alternate" type="application/rss+xml" title="小满的墨水瓶" href="/feed.xml">
+```
+
+并让 sitemap 也包含它。本仓库是主页重写版，不含博客后端，所以这一步需要在博客端实现。
+
 ## 配置：config.json
 
 根目录的 `config.json` 是页面内容的唯一数据源：
@@ -101,7 +143,6 @@ config.json  →  src/config.ts（补全默认值与派生数据）  →  src/re
   "hero": { "image": "/images/hero.svg", "imageAlt": "工业风地形扫描图" },
   "profile": {
     "avatar": {
-      "image": "/images/avatar.svg",
       "alt": "个人头像",
       "fallback": "XM",
       "caption": "XIAOMAN 1221"
@@ -227,7 +268,7 @@ config.json  →  src/config.ts（补全默认值与派生数据）  →  src/re
 - `meta.themeColor`（浏览器地址栏 / PWA 主题色）缺省时自动取 `theme.accent`；
 - `scene.accent` / `scene.glow` 控制 Canvas 地形、线框体与粒子源，属于独立的装饰色。
 
-> 当前配置是蓝色 UI（`#0066FF`）+ 荧光黄地形/粒子源（`#e6ff2e`）的双层配色。如果希望全蓝，同步修改 `scene.accent`、`scene.glow`，并重新着色 `public/images/*.svg`。
+> 当前配置是荧光黄 UI（`theme.accent: #e6ff2e`）+ 荧光黄地形/粒子源（`scene.accent: #e6ff2e`，`scene.glow: #ffff96`）的单色配色，项目卡片各自带自己的 `accent`（例如博客卡片 `#0066FF`）。如果希望全蓝，同步修改 `theme.accent`、`meta.themeColor`、`index.html` 里的静态 `theme-color`、`scene.accent`、`scene.glow`，并重新着色 `public/images/*.svg`。
 ### 系统主题（浅色 / 深色）
 
 页面通过 CSS 的 `prefers-color-scheme` 跟随系统外观：深色是默认视觉，浅色是同一套 HUD 语言的纸面变体。
@@ -269,7 +310,7 @@ config.json  →  src/config.ts（补全默认值与派生数据）  →  src/re
 
 桌面高档实测：Hero 约 12000 点（受 `hero.max` 限制）、头像约 11000–12000 点（含背景）、作品封面约 2000–4500 点。本轮同时收细了入场/转场、一言光晕、漂浮粒子与地形粒子的尺寸。
 
-#### Hero 点阵文字
+#### Hero 点阵文字轮播
 
 Hero 右侧的点阵每隔一段时间会**先打散到整个 Hero 视口，再重新拼成** `techStack` 中的一个技术词，循环播放：
 
@@ -277,10 +318,9 @@ Hero 右侧的点阵每隔一段时间会**先打散到整个 Hero 视口，再�
 - `morph.scatter` / `morph.gather` / `morph.hold` 分别控制打散、拼合与停留时长，当前为 **1.6 秒 + 1.9 秒 + 2 秒**；`morph.interval` 为两次换词的间隔（当前 `5.5` 秒，等于三段之和）；若省略 scatter/gather，则按 `interval - hold` 自动按 44% / 56% 分配；
 - 打散阶段粒子铺满整个 Hero 视口，并临时解除 `.hero-media` 的右侧蒙版、降低透明度；Hero 文案仍在粒子上层，不遮挡文字；
 - 拼合阶段粒子收拢到右侧字形区域，蒙版与透明度恢复；
-- 字形区域按分辨率与宽高比自适应：宽屏约 `48% × 46%`、中心 `72% / 46%`，窄屏自动改为更大比例并进一步左移；`hero-media` 蒙版中心同步左移到 75%，保证放大后的字完整可见；
-- 词长超过区域宽度时自动缩小字号；**默认点阵与换词粒子都跟随实时主题色**（`--acid` 为主，混入少量墨白与高光），不再使用 Hero 图片的原始青黄色；
-- 默认点阵按像素亮度在主题色的深浅梯度间取色，保留原有明暗层次；头像与作品封面仍使用各自图片的颜色；
-- **鼠标响应**：`particles.hero.interactive` 默认开启，指针进入字形区域会立即请求下一次换词（仍走打散 → 拼合流程）；停留在区域内时粒子会小幅避开光标，力度与半径经过收敛，尽量不破坏字形可读性；
+- 字形区域按分辨率与宽高比自适应：宽屏约 `48% × 46%`、中心 `72% / 46%`，窄屏自动改为更大比例并进一步左移；
+- 词长超过区域宽度时自动缩小字号；换词粒子跟随实时主题色（`--acid` 为主），默认点阵在启用轮播时同样使用主题色梯度，头像与作品封面仍使用各自图片的颜色；
+- **鼠标响应**：指针进入右侧字形区域会立即请求下一次换词；触屏点击字形区域同样触发；
 - 只作用于 Hero；`prefers-reduced-motion` 下不启用变形，保持静态点阵。
 
 #### 整屏分页与粒子转场
@@ -447,7 +487,7 @@ Hero 右侧的点阵每隔一段时间会**先打散到整个 Hero 视口，再�
 - 页脚只保留“小满的墨水瓶”自定义链接，备案入口留空（需要时在 `footer.icp` / `footer.police` 补充）；
 - 内容图片为 1px 彩色点阵；技术栈文字为普通文字。
 
-UI 强调色为蓝色 `#0066FF`，`scene.accent` 仍保留荧光黄作为地形/粒子源的辅助色。
+UI 强调色为荧光黄 `#e6ff2e`（与 `scene.accent` 一致），项目卡片各自的 `accent` 提供局部色彩对比。
 
 ## 研究：三个参考站点
 
@@ -509,9 +549,8 @@ UI 强调色为蓝色 `#0066FF`，`scene.accent` 仍保留荧光黄作为地形/
 │   ├── fonts/            # JetBrains Sans / Mono（自托管）
 │   └── images/
 │       ├── logo.svg
-│       ├── avatar.svg
 │       ├── hero.svg
-│       └── works/        # 四张作品封面 SVG
+│       └── works/        # 作品封面 SVG（云电工作室）
 ├── src/
 │   ├── config.ts         # 导入 config.json，补全默认值与派生数据并导出类型
 │   ├── util.ts           # 公共小工具（补零、日期天数）

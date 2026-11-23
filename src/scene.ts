@@ -6,11 +6,11 @@
  * is drawn with Canvas 2D instead of a WebGL engine.
  */
 
-import { readThemeColors, rgbTriplet, watchColorScheme } from './theme';
+import { readThemeColors, rgbTriplet, watchColorScheme, type Rgb } from './theme';
+import { clamp, hexToRgb, TAU } from './util';
 
-const TAU = Math.PI * 2;
-const FALLBACK_ACCENT = '230, 255, 46';
-const FALLBACK_GLOW = '255, 255, 150';
+const FALLBACK_ACCENT: Rgb = [230, 255, 46];
+const FALLBACK_GLOW: Rgb = [255, 255, 150];
 
 export interface SceneOptions {
   enabled?: boolean;
@@ -18,20 +18,6 @@ export interface SceneOptions {
   glow?: string;
   techStack?: string[];
 }
-
-const hexToRgb = (hex: string | undefined, fallback: string): string => {
-  if (!hex) return fallback;
-  let value = hex.trim().replace(/^#/, '');
-  if (value.length === 3) {
-    value = value
-      .split('')
-      .map((char) => char + char)
-      .join('');
-  }
-  if (!/^[0-9a-f]{6}$/i.test(value)) return fallback;
-  const numeric = Number.parseInt(value, 16);
-  return `${(numeric >> 16) & 255}, ${(numeric >> 8) & 255}, ${numeric & 255}`;
-};
 
 interface Particle {
   x: number;
@@ -56,9 +42,6 @@ interface TechWord {
   y: number;
   phase: number;
 }
-
-const clamp = (value: number, min: number, max: number) =>
-  Math.min(max, Math.max(min, value));
 
 const lerp = (from: number, to: number, amount: number) =>
   from + (to - from) * amount;
@@ -102,8 +85,8 @@ export class BackgroundScene {
     this.canvas = canvas;
     this.ctx = context;
     this.reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    this.accent = hexToRgb(options.accent, FALLBACK_ACCENT);
-    this.glow = hexToRgb(options.glow, FALLBACK_GLOW);
+    this.accent = rgbTriplet(hexToRgb(options.accent, FALLBACK_ACCENT));
+    this.glow = rgbTriplet(hexToRgb(options.glow, FALLBACK_GLOW));
 
     this.buildCore();
     this.buildTechWords(options.techStack ?? []);

@@ -13,8 +13,7 @@
 
 import { rasterizeText, type GlyphPoint } from './textRaster';
 import { readThemeColors } from './theme';
-
-type Rgb = [number, number, number];
+import { clamp, hexToRgb, mixRgb, randomBetween, shuffle } from './util';
 
 interface AssemblyOptions {
   enabled?: boolean;
@@ -99,42 +98,6 @@ const FLIGHT = 900;
 const MAX_DELAY = 220;
 const HOLD = 180;
 const FADE = 480;
-
-const clamp = (value: number, min: number, max: number) =>
-  Math.min(max, Math.max(min, value));
-
-const randomBetween = (min: number, max: number) =>
-  min + Math.random() * (max - min);
-
-const hexToRgb = (hex: string | undefined, fallback: Rgb): Rgb => {
-  if (!hex) return fallback;
-
-  let value = hex.trim().replace(/^#/, '');
-  if (value.length === 3) {
-    value = value
-      .split('')
-      .map((char) => char + char)
-      .join('');
-  }
-  if (!/^[0-9a-f]{6}$/i.test(value)) return fallback;
-
-  const numeric = Number.parseInt(value, 16);
-  return [(numeric >> 16) & 255, (numeric >> 8) & 255, numeric & 255];
-};
-
-const mixRgb = (from: Rgb, to: Rgb, amount: number): Rgb => [
-  Math.round(from[0] + (to[0] - from[0]) * amount),
-  Math.round(from[1] + (to[1] - from[1]) * amount),
-  Math.round(from[2] + (to[2] - from[2]) * amount),
-];
-
-const shuffle = <T>(items: T[]): T[] => {
-  for (let index = items.length - 1; index > 0; index -= 1) {
-    const swap = Math.floor(Math.random() * (index + 1));
-    [items[index], items[swap]] = [items[swap], items[index]];
-  }
-  return items;
-};
 
 const readPalette = () => {
   const style = getComputedStyle(document.documentElement);

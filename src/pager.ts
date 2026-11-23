@@ -15,8 +15,7 @@
 import { SECTION_TEXT_SELECTOR } from './assembly';
 import { rasterizeText, type GlyphPoint } from './textRaster';
 import { readThemeColors } from './theme';
-
-type Rgb = [number, number, number];
+import { clamp, hexToRgb, mixRgb, shuffle } from './util';
 
 interface SlideCache {
   elements: HTMLElement[];
@@ -78,39 +77,6 @@ const SLIDE_TEXT_SELECTOR = [
 const TRANSITION_MS = 1100;
 const REVEAL_AT = 0.78;
 const POINT_BUDGET = 1800;
-
-const clamp = (value: number, min: number, max: number) =>
-  Math.min(max, Math.max(min, value));
-
-const hexToRgb = (hex: string | undefined, fallback: Rgb): Rgb => {
-  if (!hex) return fallback;
-
-  let value = hex.trim().replace(/^#/, '');
-  if (value.length === 3) {
-    value = value
-      .split('')
-      .map((char) => char + char)
-      .join('');
-  }
-  if (!/^[0-9a-f]{6}$/i.test(value)) return fallback;
-
-  const numeric = Number.parseInt(value, 16);
-  return [(numeric >> 16) & 255, (numeric >> 8) & 255, numeric & 255];
-};
-
-const mixRgb = (from: Rgb, to: Rgb, amount: number): Rgb => [
-  Math.round(from[0] + (to[0] - from[0]) * amount),
-  Math.round(from[1] + (to[1] - from[1]) * amount),
-  Math.round(from[2] + (to[2] - from[2]) * amount),
-];
-
-const shuffle = <T>(items: T[]): T[] => {
-  for (let index = items.length - 1; index > 0; index -= 1) {
-    const swap = Math.floor(Math.random() * (index + 1));
-    [items[index], items[swap]] = [items[swap], items[index]];
-  }
-  return items;
-};
 
 const readPalette = () => {
   const style = getComputedStyle(document.documentElement);
@@ -498,6 +464,26 @@ export function initPager(): PagerHandle {
       : slide.scrollTop > 2;
   };
 
+  /**
+   * A scrollable box nested inside the slide (terminal output, etc.) must own
+   * the gesture itself; the native scroll handles it and its own
+   * `overscroll-behavior` keeps the chain from reaching the pager.
+   */
+  const findInnerScroller = (
+    start: Element | null,
+    slide: HTMLElement,
+  ): HTMLElement | null => {
+    let node: Element | null = start;
+    while (node && node !== slide && node !== document.body) {
+      if (node instanceof HTMLElement) {
+        const max = node.scrollHeight - node.clientHeight;
+        if (max > 2) return node;
+      }
+      node = node.parentElement;
+    }
+    return null;
+  };
+
   window.addEventListener(
     'wheel',
     (event) => {
@@ -513,6 +499,8 @@ export function initPager(): PagerHandle {
       }
 
       const slide = slides[index];
+
+      if (findInnerScroller(event.target as Element | null, slide)) return;
       if (canScroll(slide, direction)) return;
 
       event.preventDefault();
@@ -559,6 +547,10 @@ export function initPager(): PagerHandle {
       }
 
       const direction = dy > 0 ? 1 : -1;
+      if (findInnerScroller(event.target as Element | null, touchSlide)) {
+        touchCandidate = false;
+        return;
+      }
       if (canScroll(touchSlide, direction)) {
         touchCandidate = false;
         return;
